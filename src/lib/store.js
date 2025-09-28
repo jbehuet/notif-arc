@@ -21,7 +21,12 @@ export async function getJson(key, use_local_store = false) {
             return null;
         }
     } else {
-        const store = getStore(BUCKET);
+        const store = getStore(
+            {
+                name: 'BUCKET',
+                siteID: process.env.NETLIFY_SITE_ID,
+                token: process.env.NETLIFY_AUTH_TOKEN
+            });
         return (await store.get(key, { type: "json" }));
     }
 }
@@ -32,7 +37,12 @@ export async function setJson(key, data, use_local_store = false) {
         const file = resolve(DATA_DIR, key);
         await fs.writeFile(file, JSON.stringify(data, null, 2), "utf8");
     } else {
-        const store = getStore(BUCKET);
+        const store = getStore(
+            {
+                name: 'BUCKET',
+                siteID: process.env.NETLIFY_SITE_ID,
+                token: process.env.NETLIFY_AUTH_TOKEN
+            });
         await store.set(key, JSON.stringify(data, null, 2));
     }
 }
