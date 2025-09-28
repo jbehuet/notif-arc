@@ -1,6 +1,5 @@
 @use "@picocss/pico/scss/pico";
-
-
+@use "helper";
 
 .success{
   color: #56c69d;
@@ -8,4 +7,12 @@
 
 .error{
   color: #e35252;
+}
+
+header{
+    a, a:visited{
+      font-size: 2rem;
+      text-decoration: none;
+      color: #3a9092;
+    }
 }

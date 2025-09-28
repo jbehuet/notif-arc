@@ -3,7 +3,7 @@
 </script>
 <header class="container">
     <nav>
-        <ul><li class="item-center"><img src="/notif-arc-logo-512.png" width="56" /><strong>NotifArc</strong></li></ul>
+        <ul><li><a href="/" class="item-center"><img src="/notif-arc-logo-512.png" width="68" /><strong>NotifArc</strong></a></li></ul>
     </nav>
 </header>
 

@@ -3,4 +3,5 @@
   publish = "build"
 
 [functions]
-  directory = ".netlify/functions"
+  directory = "netlify/functions"
+  included_files = ["src/lib/**"]

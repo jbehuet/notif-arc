@@ -1,22 +1,27 @@
-import { getStore } from "@netlify/blobs";
-import { verifyToken } from "$lib/tokens";
+import { USE_LOCAL_STORE } from '$env/static/private';
+import { getJson, setJson } from '$lib/store.js';
 
-const BUCKET = "crnata-tir18m";
-const KEY = "subscribers.json";
+const SUBS_KEY = 'subscribers.json';
 
-export const load = async ({ url }) => {
-    const v = verifyToken(url.searchParams.get("token") || "", process.env.SECRET_KEY);
-    if (!v || v.action !== "unsubscribe") {
-        return { status:"error", title:"Lien invalide", message:"Le lien est invalide ou expiré." };
+const useLocalStore = USE_LOCAL_STORE == "1";
+
+export const actions = {
+    default: async ({ request }) => {
+        const data = await request.formData();
+        const email = String(data.get('email') || '').trim().toLowerCase();
+
+        if (!email) {
+            return { success: false, message: "Veuillez saisir un email." };
+        }
+
+        const list = (await getJson(SUBS_KEY, useLocalStore)) ?? [];
+        const next = list.filter((s) => s.email !== email);
+
+        if (next.length === list.length) {
+            return { success: false, message: "Adresse non trouvée dans nos abonnés." };
+        }
+
+        await setJson(SUBS_KEY, next, useLocalStore);
+        return { success: true, message: `${email} a bien été désinscrit.` };
     }
-    const store = getStore(BUCKET);
-    const raw = (await store.get(KEY, { type: "json" }));
-    const list = Array.isArray(raw) ? raw : [];
-    const next = list.filter(r => r.email !== v.email);
-    const removed = next.length !== list.length;
-    if (removed) await store.set(KEY, JSON.stringify(next, null, 2));
-
-    return removed
-        ? { status:"ok", title:"Désinscription réussie ✅", message:`${v.email} a été retiré(e) de la liste.` }
-        : { status:"error", title:"Adresse introuvable", message:"Cette adresse n'était pas abonnée." };
 };
