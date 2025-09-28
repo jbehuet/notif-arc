@@ -105,6 +105,7 @@ export async function handler() {
             headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
             body: JSON.stringify({
                 from: process.env.RESEND_FROM,
+                to: "no-reply@notif-arc.fr",
                 bcc: toList,
                 subject: "NotifArc — Nouveaux événements tir à 18 m",
                 html: htmlBody
