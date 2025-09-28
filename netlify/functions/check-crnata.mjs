@@ -1,18 +1,13 @@
 // Netlify Scheduled Function — NotifArc / CRNATA 18m
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
-
-// IMPORTANT: on réutilise le même wrapper que côté SvelteKit
-import { getJson, setJson } from "../../src/lib/store.js";
-import { signToken } from "../../src/lib/tokens.js";
-
-const base = process.env.APP_BASE_URL;
-const secret = process.env.SECRET_KEY;
+import { promises as fs } from "node:fs";
+import { resolve } from "node:path";
+import { getStore } from "@netlify/blobs";
 
 const SUBS_KEY = "subscribers.json";
 const EVENTS_KEY = "last_events.json";
 const URL = "https://www.crnata.fr/evenements/tags/tir-a-18m/";
-const USE_LOCAL_STORE = process.env.USE_LOCAL_STORE  == "1"
 
 function nowFR() {
     return new Date().toLocaleString("fr-FR", { timeZone: process.env.LOCAL_TZ || "Europe/Paris" });
@@ -37,7 +32,7 @@ export async function handler() {
     });
 
     // --- état précédent ---
-    const prev = (await getJson(EVENTS_KEY, USE_LOCAL_STORE)) || [];
+    const prev = (await getJson(EVENTS_KEY)) || [];
     const prevUrls = new Set(prev.map(r => r[0]));
     const newItems = events.filter(([u]) => !prevUrls.has(u));
     const knownItems = events.filter(([u]) => prevUrls.has(u));
@@ -45,7 +40,7 @@ export async function handler() {
     // première exécution ? juste snapshot si pas de FIRST_RUN_NOTIFY
     const firstRun = prev.length === 0;
     if (firstRun && !process.env.FIRST_RUN_NOTIFY) {
-        await setJson(EVENTS_KEY, events, USE_LOCAL_STORE);
+        await setJson(EVENTS_KEY, events);
         return { statusCode: 200, body: "Snapshot saved (first run)" };
     }
 
@@ -93,10 +88,10 @@ export async function handler() {
     }
 
     // --- destinataires ---
-    const subs = (await getJson(SUBS_KEY, USE_LOCAL_STORE )) || [];
+    const subs = (await getJson(SUBS_KEY )) || [];
     const toList = subs.filter(s => s.status === "confirmed").map(s => s.email);
     if (!toList.length) {
-        await setJson(EVENTS_KEY, events, USE_LOCAL_STORE);
+        await setJson(EVENTS_KEY, events);
         return { statusCode: 200, body: "No confirmed subscribers" };
     }
 
@@ -118,9 +113,37 @@ export async function handler() {
         console.log("Resend:", resp.status, await resp.text());
     }
 
-    await setJson(EVENTS_KEY, events, USE_LOCAL_STORE);
+    await setJson(EVENTS_KEY, events);
     return { statusCode: 200, body: `OK (new: ${newItems.length}, sent: ${toList.length})` };
 }
 
 // active la planification automatiquement en prod Netlify
 export const config = { schedule: "0 6,12,18 * * *" };
+
+// Store
+const BUCKET = "crnata-tir18m";
+
+async function ensureDir(p) {
+    await fs.mkdir(p, { recursive: true }).catch(() => {});
+}
+
+async function getJson(key) {
+    const store = getStore(
+        {
+            name: BUCKET,
+            siteID: process.env.NETLIFY_SITE_ID,
+            token: process.env.NETLIFY_AUTH_TOKEN
+        });
+    return (await store.get(key, { type: "json" }));
+}
+
+async function setJson(key, data) {
+    const store = getStore(
+        {
+            name: BUCKET,
+            siteID: process.env.NETLIFY_SITE_ID,
+            token: process.env.NETLIFY_AUTH_TOKEN
+        });
+    await store.set(key, JSON.stringify(data, null, 2));
+
+}

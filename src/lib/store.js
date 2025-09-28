@@ -1,9 +1,9 @@
 import { promises as fs } from "node:fs";
 import { resolve } from "node:path";
 import { getStore } from "@netlify/blobs";
+import { NETLIFY_SITE_ID, NETLIFY_AUTH_TOKEN } from '$env/static/private';
 
 const DATA_DIR = resolve(process.cwd(), ".data");
-
 const BUCKET = "crnata-tir18m";
 
 async function ensureDir(p) {
@@ -23,9 +23,9 @@ export async function getJson(key, use_local_store = false) {
     } else {
         const store = getStore(
             {
-                name: 'BUCKET',
-                siteID: process.env.NETLIFY_SITE_ID,
-                token: process.env.NETLIFY_AUTH_TOKEN
+                name: BUCKET,
+                siteID: NETLIFY_SITE_ID,
+                token: NETLIFY_AUTH_TOKEN
             });
         return (await store.get(key, { type: "json" }));
     }
@@ -39,9 +39,9 @@ export async function setJson(key, data, use_local_store = false) {
     } else {
         const store = getStore(
             {
-                name: 'BUCKET',
-                siteID: process.env.NETLIFY_SITE_ID,
-                token: process.env.NETLIFY_AUTH_TOKEN
+                name: BUCKET,
+                siteID: NETLIFY_SITE_ID,
+                token: NETLIFY_AUTH_TOKEN
             });
         await store.set(key, JSON.stringify(data, null, 2));
     }
