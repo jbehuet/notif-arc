@@ -21,7 +21,8 @@ export const load = async ({ url }) => {
         await setJson(SUBS_KEY, list,useLocalStore);
     }
 
-    const content = (await getJson(EVENTS_KEY, useLocalStore)) ?? { savedAt: null, data: [] };
+    let content = (await getJson(EVENTS_KEY, useLocalStore)) ?? { savedAt: null, data: [] };
+
     const events = content.data;
     // envoi mail avec les evenements existants
     await fetch("https://api.resend.com/emails", {

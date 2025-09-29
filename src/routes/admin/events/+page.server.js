@@ -15,7 +15,7 @@ export const load = async ({ url }) => {
         };
     }
 
-    const content = (await getJson(EVENTS_KEY, useLocalStore)) ?? { savedAt: null, data: [] };
+    let content = (await getJson(EVENTS_KEY, useLocalStore)) ?? { savedAt: null, data: [] };
     return {
         events: content.data,
         savedAt: content.savedAt,
