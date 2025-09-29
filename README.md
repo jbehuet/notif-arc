@@ -1,38 +1,66 @@
-# sv
+# 🎯 NotifArc
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+**NotifArc** est une application web qui permet de souscrire par mail à la notification de dépôt d'un nouveau
+de tir à 18m sur le site [crnata.fr](http://crnata.fr)
 
-## Creating a project
+---
 
-If you're seeing this, you've probably already done this step. Congrats!
+## 🚀 Démarrage local
 
-```sh
-# create a new project in the current directory
-npx sv create
+### 1. Clonez le dépôt
 
-# create a new project in my-app
-npx sv create my-app
+```bash
+git clone https://github.com/jbehuet/notif-arc.git
+cd notif-arc
 ```
 
-## Developing
+### 2. Installez les dépendances
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+```bash
+npm install
+```
 
-```sh
+### 3. Créez le fichier `.env.local`
+
+```env
+NETLIFY_SITE_ID=
+NETLIFY_AUTH_TOKEN=
+RESEND_API_KEY=votre_resend_key
+```
+
+### 4. Éxécuter
+
+```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+L'application est accessible sur [http://localhost:5173](http://localhost:5173)
 
-To create a production version of your app:
+---
 
-```sh
-npm run build
-```
+## 🏗️ Déploiement
 
-You can preview the production build with `npm run preview`.
+Le projet peut être déployé sur [Netlify](https://www.netlify.com/): [notif-arc.fr](https://www.notif-arc.fr/)
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+---
+
+## 📦 Stack technique
+
+- [SvelteKit](https://svelte.dev/)
+- [PicoCSS](https://picocss.com/)
+
+## 🧩 API Externes
+- [Resend](https://resend.com)
+
+---
+
+## 📄 Licence
+
+Projet libre et open source – MIT License.
+
+---
+
+## 🙌 Contribuer
+
+Les contributions sont les bienvenues !  
+Améliorez une fonctionnalité, proposez en des nouvelles, ou ouvrez une issue ✨
