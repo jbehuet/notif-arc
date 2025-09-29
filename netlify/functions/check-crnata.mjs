@@ -31,7 +31,8 @@ export async function handler() {
     });
 
     // --- état précédent ---
-    const prev = (await getJson(EVENTS_KEY)) || [];
+    const prevWrap = (await getJson(EVENTS_KEY)) || { savedAt: null, data: [] };
+    const prev = prevWrap.data;
     const prevUrls = new Set(prev.map(r => r[0]));
     const newItems = events.filter(([u]) => !prevUrls.has(u));
     const knownItems = events.filter(([u]) => prevUrls.has(u));
@@ -131,7 +132,11 @@ async function getJson(key) {
             siteID: process.env.NETLIFY_SITE_ID,
             token: process.env.NETLIFY_AUTH_TOKEN
         });
-    return (await store.get(key, { type: "json" }));
+    const payload = await store.get(key, { type: "json" });
+    if (!payload) return null;
+    // compatibilité si ancien format (juste un tableau)
+    if (Array.isArray(payload)) return { savedAt: null, data: payload };
+    return payload;
 }
 
 async function setJson(key, data) {
@@ -141,6 +146,11 @@ async function setJson(key, data) {
             siteID: process.env.NETLIFY_SITE_ID,
             token: process.env.NETLIFY_AUTH_TOKEN
         });
-    await store.set(key, JSON.stringify(data, null, 2));
+
+    const payload = {
+        savedAt: nowFR(),
+        data
+    };
+    await store.set(key, JSON.stringify(payload, null, 2));
 
 }

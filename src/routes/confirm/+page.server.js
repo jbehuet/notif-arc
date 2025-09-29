@@ -21,8 +21,8 @@ export const load = async ({ url }) => {
         await setJson(SUBS_KEY, list,useLocalStore);
     }
 
-    const events = (await getJson(EVENTS_KEY, useLocalStore)) ?? [];
-    const ts = new Date().toLocaleString("fr-FR", { timeZone: "Europe/Paris" });
+    const content = (await getJson(EVENTS_KEY, useLocalStore)) ?? { savedAt: null, data: [] };
+    const events = content.data;
     // envoi mail avec les evenements existants
     await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -42,7 +42,7 @@ export const load = async ({ url }) => {
             <ul>
                  ${events.map((s) => `<li><a href="${s[0]}" target="_blank">${s[1]}</a> ${s[2]}</li>`).join("")}
             </ul>
-            <p><small style="color:#666">mis à jour le ${ts}</small></p>
+            <p><small style="color:#666">mis à jour le ${content.savedAt}</small></p>
             <hr/>
             <p style="font-size:small;color:#666;">
             Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>

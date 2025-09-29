@@ -12,7 +12,8 @@
 
     {#if data.status !== 401}
         <p>
-            <strong>Total:</strong> {data.meta.total}
+            <strong>Total:</strong> {data.meta.total} —
+            <small>Mise à jour le {data.savedAt}</small>
         </p>
 
         <ul>

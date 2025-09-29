@@ -27,7 +27,12 @@ export async function getJson(key, use_local_store = false) {
                 siteID: NETLIFY_SITE_ID,
                 token: NETLIFY_AUTH_TOKEN
             });
-        return (await store.get(key, { type: "json" }));
+        const payload = await store.get(key, { type: "json" });
+        if (!payload) return null;
+
+        // compatibilité si ancien format (juste un tableau)
+        if (Array.isArray(payload)) return { savedAt: null, data: payload };
+        return payload;
     }
 }
 

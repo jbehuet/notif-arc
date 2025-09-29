@@ -15,10 +15,11 @@ export const load = async ({ url }) => {
         };
     }
 
-    const list = (await getJson(EVENTS_KEY, useLocalStore)) ?? [];
+    const content = (await getJson(EVENTS_KEY, useLocalStore)) ?? { savedAt: null, data: [] };
     return {
-        events: list,
-        meta: { total: list.length },
+        events: content.data,
+        savedAt: content.savedAt,
+        meta: { total: content.data.length },
         token
     };
 };
