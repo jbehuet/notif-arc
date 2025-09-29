@@ -9,8 +9,7 @@
 
 <main class="container">
     <slot />
+    <footer class="container">
+        <small>par Jerome B. © {new Date().getFullYear()} — NotifArc</small>
+    </footer>
 </main>
-
-<footer class="container">
-    <small>par Jerome B. © {new Date().getFullYear()} — NotifArc</small>
-</footer>

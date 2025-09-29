@@ -1,0 +1,15 @@
+@media screen and (max-width: 768px) {
+  fieldset {
+    display: block !important;
+
+    input {
+      border-top-right-radius: var(--pico-border-radius) !important;
+      border-bottom-right-radius: var(--pico-border-radius) !important;
+      margin-bottom:var(--pico-spacing) !important;
+    }
+
+    button {
+      width: 100% !important;
+    }
+  }
+}

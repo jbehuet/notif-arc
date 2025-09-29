@@ -8,7 +8,7 @@
             body: JSON.stringify({ email, name, honey })
         });
 
-        const data = res.ok ? await res.json() : null;;
+        const data = res.ok ? await res.json() : null;
         ok = res.ok;
         if (ok && data) {
             message = data.message

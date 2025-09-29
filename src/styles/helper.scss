@@ -10,3 +10,14 @@
   align-items: center;
   display: flex;
 }
+
+.items-space-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.small-button {
+  padding: 6px;
+  font-size: 0.875em;
+}
