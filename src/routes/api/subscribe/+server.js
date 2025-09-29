@@ -36,7 +36,10 @@ export const POST = async ({ request, url }) => {
             from: RESEND_FROM,
             to: [clean],
             subject: "Confirmez votre souscription — NotifArc",
-            html: `<p>Confirmez votre souscription : <a href="${link}">${link}</a></p>`
+            html: `
+            <p>Bonjour,</p>
+            <p>Pour finaliser votre souscription à <a href="https://www.notif-arc.fr">NotifArc</a> merci de confirmer votre email :</p>
+            <p><a href="${link}">Confirmer mon email</a></p>`
         })
     });
 

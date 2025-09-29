@@ -66,7 +66,7 @@ export async function handler() {
       <ul>${knownHtml}</ul>
       <hr/>
       <p style="font-size:small;color:#666;">
-        Vous recevez cet email car vous êtes inscrit à NotifArc.<br/>
+        Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
         <a href="${process.env.APP_BASE_URL}/unsubscribe">Se désinscrire</a>
       </p>
     `;
@@ -80,7 +80,7 @@ export async function handler() {
       <ul>${allHtml}</ul>
       <hr/>
       <p style="font-size:small;color:#666;">
-        Vous recevez cet email car vous êtes inscrit à NotifArc.<br/>
+        Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
         <a href="${process.env.APP_BASE_URL}/unsubscribe">Se désinscrire</a>
       </p>
     `;
