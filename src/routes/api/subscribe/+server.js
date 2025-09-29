@@ -10,7 +10,7 @@ import {
 } from '$env/static/private';
 
 const SUBS_KEY = "subscribers.json";
-const useLocalStore = USE_LOCAL_STORE == "1";
+const useLocalStore = USE_LOCAL_STORE === "1";
 
 export const POST = async ({ request, url }) => {
     const body = await request.json().catch(() => ({}));

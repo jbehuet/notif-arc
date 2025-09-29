@@ -3,7 +3,7 @@ import { getJson, setJson } from "$lib/store";
 import {SECRET_KEY, USE_LOCAL_STORE} from '$env/static/private';
 
 const SUBS_KEY = "subscribers.json";
-const useLocalStore = USE_LOCAL_STORE == "1";
+const useLocalStore = USE_LOCAL_STORE === "1";
 
 export const load = async ({ url }) => {
     const v = verifyToken(url.searchParams.get("token") || "", SECRET_KEY);
