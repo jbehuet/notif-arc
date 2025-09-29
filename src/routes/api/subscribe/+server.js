@@ -20,6 +20,13 @@ export const POST = async ({ request, url }) => {
     }
 
     const list = (await getJson(SUBS_KEY, useLocalStore)) ?? [];
+    const idx = list.findIndex(r => r.email === clean && r.status === "confirmed");
+    if (idx > -1){
+        // Déjà inscrit
+        return json({ message: "Email déjà inscrit et confirmé." });
+    }
+
+
     const rec = { email: clean, status: "pending", ts: Date.now() };
     await setJson(SUBS_KEY, [...list.filter(r => r.email !== clean), rec], useLocalStore);
 

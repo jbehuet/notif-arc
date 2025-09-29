@@ -57,13 +57,13 @@ export async function handler() {
         const knownHtml = knownItems.map(([u,t,d]) => `<li><a href="${u}">${t}</a> — ${d}</li>`).join("");
         htmlBody = `
       <div>
-        <h3>Événements tir à 18 m — Nouveautés</h3>
-        <small style="color:#666">mis à jour le ${ts}</small>
+        <h3>Évènements tir à 18 m — Nouveautés</h3>
       </div>
       <h4>Nouveaux :</h4>
       <ul>${newHtml}</ul>
       <h4>Déjà connus :</h4>
       <ul>${knownHtml}</ul>
+      <p><small style="color:#666">mis à jour le ${ts}</small></p>
       <hr/>
       <p style="font-size:small;color:#666;">
         Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
@@ -75,9 +75,9 @@ export async function handler() {
         htmlBody = `
       <div>
         <h3>Pas de nouveauté — envoi manuel</h3>
-        <small style="color:#666">mis à jour le ${ts}</small>
       </div>
       <ul>${allHtml}</ul>
+      <p><small style="color:#666">mis à jour le ${ts}</small></p>
       <hr/>
       <p style="font-size:small;color:#666;">
         Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
@@ -106,7 +106,7 @@ export async function handler() {
                 from: process.env.RESEND_FROM,
                 to: "no-reply@notif-arc.fr",
                 bcc: toList,
-                subject: "NotifArc — Nouveaux événements tir à 18 m",
+                subject: "NotifArc — Nouveaux évènements tir à 18 m",
                 html: htmlBody
             })
         });
