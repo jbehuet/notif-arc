@@ -58,8 +58,8 @@ export async function runCheck({ forceSend = false, dryRun = false }) {
     // --- construire l'email ---
     let htmlBody = "";
     if (newItems.length) {
-        const newHtml = newItems.map(([u,t,d]) => `<li><a href="${u}">${t}</a> — ${d}</li>`).join("");
-        const knownHtml = knownItems.map(([u,t,d]) => `<li><a href="${u}">${t}</a> — ${d}</li>`).join("");
+        const newHtml = newItems.map(([u,t,d]) => `<li><a href="${u}">${t}</a> ${d}</li>`).join("");
+        const knownHtml = knownItems.map(([u,t,d]) => `<li><a href="${u}">${t}</a> ${d}</li>`).join("");
         htmlBody = `
       <div>
         <h3>Évènements tir à 18 m — Nouveautés</h3>
@@ -76,7 +76,7 @@ export async function runCheck({ forceSend = false, dryRun = false }) {
       </p>
     `;
     } else {
-        const allHtml = events.map(([u,t,d]) => `<li><a href="${u}">${t}</a> — ${d}</li>`).join("");
+        const allHtml = events.map(([u,t,d]) => `<li><a href="${u}">${t}</a> ${d}</li>`).join("");
         htmlBody = `
       <div>
         <h3>Pas de nouveauté — envoi manuel</h3>
