@@ -2,7 +2,6 @@
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 import { promises as fs } from "node:fs";
-import { resolve } from "node:path";
 import { getStore } from "@netlify/blobs";
 
 const SUBS_KEY = "subscribers.json";
@@ -117,9 +116,6 @@ export async function handler() {
     await setJson(EVENTS_KEY, events);
     return { statusCode: 200, body: `OK (new: ${newItems.length}, sent: ${toList.length})` };
 }
-
-// active la planification automatiquement en prod Netlify
-export const config = { schedule: "0 6,12,18 * * *" };
 
 // Store
 const BUCKET = "crnata-tir18m";

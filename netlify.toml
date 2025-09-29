@@ -5,3 +5,6 @@
 [functions]
   directory = "netlify/functions"
   included_files = ["src/lib/**"]
+
+[functions."check-crnata"]
+  schedule = "0 6,12,18 * * *"
