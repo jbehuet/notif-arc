@@ -16,4 +16,14 @@ header{
       text-decoration: none;
       color: #3a9092;
     }
+
+  .logo {
+    a {
+      padding-bottom: 0;
+    }
+    small {
+      padding-left: 15px;
+      color: var(--pico-muted-color);
+    }
+  }
 }
