@@ -12,9 +12,8 @@ function nowFR() {
 }
 
 export async function runCheck({ forceSend = false, dryRun = false }) {
-    console.log("run crnata function");
-    console.log("force send", forceSend);
-    console.log("dryRun", dryRun);
+    console.log("run crnata function - force send : ", forceSend, " - dryRun", dryRun);
+
     // --- scrape ---
     const res = await fetch(URL, { headers: { "User-Agent": "NotifArc Netlify Cron" } });
     if (!res.ok) return { statusCode: 500, body: "Fetch error" };
@@ -100,24 +99,24 @@ export async function runCheck({ forceSend = false, dryRun = false }) {
         return { statusCode: 200, body: "No confirmed subscribers"};
     }
 
-    // --- envoi via Resend ---
     if (dryRun) {
         console.log("DRY_RUN: preview only\n", htmlBody);
         return { statusCode: 200, body : htmlBody };
-    } else {
-        const resp = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-                from: process.env.RESEND_FROM,
-                to: "no-reply@notif-arc.fr",
-                bcc: toList,
-                subject: "NotifArc — Nouveaux évènements tir à 18 m",
-                html: htmlBody
-            })
-        });
-        console.log("Resend:", resp.status, await resp.text());
     }
+
+    // --- envoi via Resend ---
+    const resp = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+            from: process.env.RESEND_FROM,
+            to: "no-reply@notif-arc.fr",
+            bcc: toList,
+            subject: "NotifArc — Nouveaux évènements tir à 18 m",
+            html: htmlBody
+        })
+    });
+    console.log("Resend:", resp.status, await resp.text());
 
     await setJson(EVENTS_KEY, {savedAt: ts, data: events});
     console.log(`OK (new: ${newItems.length}, sent: ${toList.length})`);
@@ -127,7 +126,7 @@ export async function runCheck({ forceSend = false, dryRun = false }) {
 // Store
 const BUCKET = "crnata-tir18m";
 async function getJson(key) {
-    const store = getStore(
+   const store = getStore(
         {
             name: BUCKET,
             siteID: process.env.NETLIFY_SITE_ID,
