@@ -92,7 +92,7 @@ export async function runCheck({ forceSend = false, dryRun = false }) {
 
     // --- destinataires ---
     const subs = (await getJson(SUBS_KEY )) || [];
-    const toList = subs.filter(s => s.status === "confirmed").map(s => s.email);
+    const toList = subs.filter(s => s.status === "confirmed" && s.email !== "jbehuet@gmail.com").map(s => s.email);
     if (!toList.length) {
         await setJson(EVENTS_KEY, {savedAt: ts, data: events});
         console.log("No confirmed subscribers");
@@ -110,7 +110,7 @@ export async function runCheck({ forceSend = false, dryRun = false }) {
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
             from: process.env.RESEND_FROM,
-            to: "no-reply@notif-arc.fr",
+            to: "jbehuet@gmail.com",
             bcc: toList,
             subject: "NotifArc — Nouveaux évènements tir à 18 m",
             html: htmlBody
