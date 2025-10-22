@@ -27,7 +27,8 @@ export const POST = async ({ request, url }) => {
     }
 
 
-    const rec = { email: clean, status: "pending", ts: Date.now() };
+    //TODO ajouter la/les categories sélectionnées
+    const rec = { email: clean, status: "pending", categories: ["18m"], ts: Date.now() };
     await setJson(SUBS_KEY, [...list.filter(r => r.email !== clean), rec], useLocalStore);
 
     const token = signToken(clean, "confirm", SECRET_KEY);
