@@ -12,6 +12,6 @@
 <main class="container">
     <slot />
     <footer class="container">
-        <small>par <a href="mailto:jbehuet@gmail.com">Jerome B.</a> © {new Date().getFullYear()} — NotifArc v0.0.1</small>
+        <small>par <a href="mailto:jbehuet@gmail.com">Jerome B.</a> © {new Date().getFullYear()} — NotifArc v0.1.0</small>
     </footer>
 </main>

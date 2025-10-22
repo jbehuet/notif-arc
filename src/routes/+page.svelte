@@ -1,8 +1,18 @@
 <script>
+    import CategorySelector from "$lib/components/categorySelector.svelte";
+    let categorieSelected = ["18m"];
+
     export let data;
     let email = "", name = "", message = "", ok = false, honey = "";
     async function submit(e) {
-        e.preventDefault(); message = ""; ok = false;
+        e.preventDefault();
+        message = "";
+        ok = false;
+        if (categorieSelected.length === 0) {
+            message = "Veuillez sélectionner au moins une catégorie";
+            return;
+        }
+
         const res = await fetch("/api/subscribe", {
             method: "POST",
             headers: {"Content-Type":"application/json"},
@@ -23,10 +33,12 @@
 <main class="container">
     <article>
         <header>
-            <strong>Mandats 18m</strong>
+            <strong>Mandats ligue : Nouvelle Aquitaine</strong>
         </header>
-        <p>Inscrivez-vous pour être notifié quand un nouveau mandat de <strong>tir à 18m</strong> est publié sur <a href="www.crnata.fr" target="_blank">CRNATA</a>.</p>
-        <form onsubmit={submit}>
+        <p>Inscrivez-vous pour être notifié quand un nouveau mandat est publié sur <a href="https://www.crnata.fr" target="_blank">CRNATA</a>.</p>
+        <form onsubmit={submit} oninput={() => (message = '')}>
+            <CategorySelector bind:value={categorieSelected} />
+
             <fieldset role="group">
                 <input type="email" name="email" bind:value={email} placeholder="email@exemple.fr" required />
                 <button type="submit">S’abonner</button>
@@ -52,9 +64,9 @@
                 {#if message}
                     <span>{message}</span>
                 {/if}
-                <ul>
+                <ul class="list">
                     {#each data.events as s}
-                        <li><a href="{s[0]}" target="_blank">{s[1]}</a> {s[2]}</li>
+                        <li><a href="{s[0]}" target="_blank">{s[1]}</a> {s[2].replace("- Toute la journée", "")}</li>
                     {/each}
                 </ul>
             </details>

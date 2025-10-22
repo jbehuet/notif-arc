@@ -12,4 +12,20 @@
       width: 100% !important;
     }
   }
+
+  .container{
+    padding-top: .2rem;
+    padding-right: .2rem;
+    padding-left: .2rem;
+  }
+
+  header{
+    .logo{
+      padding: 0;
+    }
+  }
+
+  .list{
+    padding-left: 1rem;
+  }
 }
