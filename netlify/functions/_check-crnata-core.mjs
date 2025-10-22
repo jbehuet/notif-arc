@@ -4,7 +4,7 @@ import * as cheerio from "cheerio";
 import { getStore } from "@netlify/blobs";
 
 const SUBS_KEY = "subscribers.json";
-const EVENTS_KEY = "last_events.json";
+const EVENTS_KEY = "nouvelle_aquitaine_events.json";
 const URL = "https://www.crnata.fr/evenements/tags/tir-a-18m/";
 
 function nowFR() {
@@ -33,8 +33,8 @@ export async function runCheck({ forceSend = false, dryRun = false }) {
     });
 
     // --- état précédent ---
-    let prevWrap = (await getJson(EVENTS_KEY)) || { savedAt: null, data: [] };
-    const prev = prevWrap.data;
+    let prevWrap = (await getJson(EVENTS_KEY)) || { savedAt: null, tir18m: [] };
+    const prev = prevWrap.tir18m;
     const prevUrls = new Set(prev.map(r => r[0]));
     const newItems = events.filter(([u]) => !prevUrls.has(u));
     const knownItems = events.filter(([u]) => prevUrls.has(u));
@@ -42,14 +42,14 @@ export async function runCheck({ forceSend = false, dryRun = false }) {
     // première exécution ? juste snapshot si pas de FIRST_RUN_NOTIFY
     const firstRun = prev.length === 0;
     if (firstRun) {
-        await setJson(EVENTS_KEY, {savedAt: ts, data: events});
+        await setJson(EVENTS_KEY, {savedAt: ts, tir18m: events});
         console.log("Snapshot saved (first run)");
         return { statusCode: 200,  body:"Snapshot saved (first run)" };
     }
 
     // rien de neuf et pas de FORCE_SEND
     if (!newItems.length && !forceSend) {
-        await setJson(EVENTS_KEY, {savedAt: ts, data: events});
+        await setJson(EVENTS_KEY, {savedAt: ts, tir18m: events});
         console.log("No new events");
         return { statusCode: 200, body: "No new events" };
     }
@@ -118,13 +118,13 @@ export async function runCheck({ forceSend = false, dryRun = false }) {
     });
     console.log("Resend:", resp.status, await resp.text());
 
-    await setJson(EVENTS_KEY, {savedAt: ts, data: events});
+    await setJson(EVENTS_KEY, {savedAt: ts, tir18m: events});
     console.log(`OK (new: ${newItems.length}, sent: ${toList.length})`);
     return { statusCode: 200, body : `OK (new: ${newItems.length}, sent: ${toList.length})` };
 }
 
 // Store
-const BUCKET = "crnata-tir18m";
+const BUCKET = "notif-arc";
 async function getJson(key) {
    const store = getStore(
         {

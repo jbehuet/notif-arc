@@ -4,7 +4,7 @@ import { getStore } from "@netlify/blobs";
 import { NETLIFY_SITE_ID, NETLIFY_AUTH_TOKEN } from '$env/static/private';
 
 const DATA_DIR = resolve(process.cwd(), ".data");
-const BUCKET = "crnata-tir18m";
+const BUCKET = "notif-arc";
 
 async function ensureDir(p) {
     await fs.mkdir(p, { recursive: true }).catch(() => {});

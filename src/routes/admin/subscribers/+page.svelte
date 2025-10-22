@@ -21,18 +21,18 @@
             <thead>
             <tr>
                 <th>Email</th>
+                <th>Catégories</th>
                 <th>Statut</th>
                 <th>Inscription</th>
-                <th>Confirmé</th>
             </tr>
             </thead>
             <tbody>
             {#each data.subscribers as s}
                 <tr>
                     <td><code>{s.email}</code></td>
+                    <td>{s.categories.join(", ")}</td>
                     <td>{s.status}</td>
                     <td>{s.ts ? new Date(s.ts).toLocaleString('fr-FR') : "—"}</td>
-                    <td>{s.confirmedAt ? new Date(s.confirmedAt).toLocaleString('fr-FR') : "—"}</td>
                 </tr>
             {/each}
             </tbody>
