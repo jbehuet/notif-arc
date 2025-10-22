@@ -1,9 +1,9 @@
 <script>
     import CategorySelector from "$lib/components/categorySelector.svelte";
-    let categorieSelected = ["18m"];
+    let categorieSelected = ["tir18m"];
 
     export let data;
-    let email = "", name = "", message = "", ok = false, honey = "";
+    let email = "", message = "", ok = false, honey = "";
     async function submit(e) {
         e.preventDefault();
         message = "";
@@ -16,7 +16,7 @@
         const res = await fetch("/api/subscribe", {
             method: "POST",
             headers: {"Content-Type":"application/json"},
-            body: JSON.stringify({ email, name, honey })
+            body: JSON.stringify({ email, categories: categorieSelected, honey })
         });
 
         const result = res.ok ? await res.json() : null;
@@ -26,7 +26,7 @@
         } else {
             message = "Une erreur est survenue. Veuillez réessayer plus tard.";
         }
-        if (ok) { email = ""; name = ""; }
+        if (ok) { email = ""; }
     }
 </script>
 

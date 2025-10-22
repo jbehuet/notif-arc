@@ -23,7 +23,7 @@ export const load = async ({ url }) => {
 
     let content = (await getJson(EVENTS_KEY, useLocalStore)) ?? { savedAt: null, tir18m: [] };
 
-    const events = content.tir18m;
+    const events18m = content.tir18m;
     // envoi mail avec les evenements existants
     await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -34,14 +34,14 @@ export const load = async ({ url }) => {
         body: JSON.stringify({
             from: RESEND_FROM,
             to: [v.email],
-            subject: "NotifArc — évènements tir à 18 m",
+            subject: "NotifArc — Mandats",
             html: `
             <div>
                 <h3>Événements tir à 18 m</h3>
             </div>
             <h4>Déjà connus :</h4>
             <ul>
-                 ${events.map((s) => `<li><a href="${s[0]}" target="_blank">${s[1]}</a> ${s[2]}</li>`).join("")}
+                 ${events18m.map((s) => `<li><a href="${s[0]}" target="_blank">${s[1]}</a> ${s[2]}</li>`).join("")}
             </ul>
             <p><small style="color:#666">mis à jour le ${content.savedAt}</small></p>
             <hr/>
