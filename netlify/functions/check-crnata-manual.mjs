@@ -9,7 +9,7 @@ export async function handler(req, ctx) {
     const force  = getQueryParam(req, "force") === "1";
     const dryRun = (getQueryParam(req, "dryRun") === "1") || (getQueryParam(req, ctx, "dry_run") === "1");
 
-    const result = await runCheck({ forceSend: force, dryRun: dryRun });
+    const result = await runCheck({ forceSend: force, dryRun: true });
 
     return result;
 };

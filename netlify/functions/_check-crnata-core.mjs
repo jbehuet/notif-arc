@@ -37,7 +37,7 @@ async function scrapePaginated(startUrl) {
                 node && node.nextSibling && node.nextSibling.data
                     ? node.nextSibling.data.trim()
                     : 'Date inconnue';
-            events.push([ href, title, dateTxt ]);
+            events.push({href, title, date: dateTxt});
         });
 
         //trouver le lien "suivant"
@@ -66,11 +66,11 @@ export async function runCheck({ forceSend = false, dryRun = false }) {
     // --- état précédent ---
     let prevWrap = (await getJson(EVENTS_KEY)) || { savedAt: null, tir18m: [] };
     const prev = prevWrap.tir18m;
-    const prevUrls = new Set(prev.map(r => r[0]));
+    const prevUrls = new Set(newWrap.map(e => e.href));
 
     //TODO faire pour chaque categorie - voir pour grouper dans le mail des personnes qui le souhaite les categories suivi
-    const newItems = eventsGlobal["tir18m"].filter(([u]) => !prevUrls.has(u));
-    const knownItems = eventsGlobal["tir18m"].filter(([u]) => prevUrls.has(u));
+    const newItems = eventsGlobal["tir18m"].filter((e) => !prevUrls.has(e.href));
+    const knownItems = eventsGlobal["tir18m"].filter((e) => prevUrls.has(e.href));
 
     // première exécution ? juste snapshot si pas de FIRST_RUN_NOTIFY
     const firstRun = prev.length === 0;
@@ -92,8 +92,8 @@ export async function runCheck({ forceSend = false, dryRun = false }) {
     // --- construire l'email ---
     let htmlBody = "";
     if (newItems.length) {
-        const newHtml = newItems.map(([u,t,d]) => `<li><a href="${u}">${t}</a> ${d}</li>`).join("");
-        const knownHtml = knownItems.map(([u,t,d]) => `<li><a href="${u}">${t}</a> ${d}</li>`).join("");
+        const newHtml = newItems.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
+        const knownHtml = knownItems.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
         htmlBody = `
       <div>
         <h3>Évènements tir à 18 m — Nouveautés</h3>
@@ -110,7 +110,7 @@ export async function runCheck({ forceSend = false, dryRun = false }) {
       </p>
     `;
     } else {
-        const allHtml = events.map(([u,t,d]) => `<li><a href="${u}">${t}</a> ${d}</li>`).join("");
+        const allHtml = events.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
         htmlBody = `
       <div>
         <h3>Pas de nouveauté — envoi manuel</h3>

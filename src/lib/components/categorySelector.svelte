@@ -1,7 +1,7 @@
 <script>
     export let categories = [
         { slug: "18m", label: "Tir à 18m", subtitle: "Compétitions en salle", emoji: "🎯", disabled: false },
-        { slug: "exterieur", label: "Tir extérieur", subtitle: "50/70m plein air", emoji: "☀️" , disabled : true }
+        { slug: "exterieur", label: "Tir extérieur (à venir)", subtitle: "50/70m plein air", emoji: "☀️" , disabled : true }
     ];
 
     /** tableau des slugs sélectionnés (bindable) */

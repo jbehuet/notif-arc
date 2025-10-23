@@ -65,8 +65,8 @@
                     <span>{message}</span>
                 {/if}
                 <ul class="list">
-                    {#each data.events as s}
-                        <li><a href="{s[0]}" target="_blank">{s[1]}</a> {s[2].replace("- Toute la journée", "")}</li>
+                    {#each data.events as event}
+                        <li><a href="{event.href}" target="_blank">{event.title}</a> {event.date.replace("- Toute la journée", "")}</li>
                     {/each}
                 </ul>
             </details>
