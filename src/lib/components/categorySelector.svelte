@@ -1,11 +1,11 @@
 <script>
     export let categories = [
-        { slug: "18m", label: "Tir à 18m", subtitle: "Compétitions en salle", emoji: "🎯", disabled: false },
-        { slug: "exterieur", label: "Tir extérieur (à venir)", subtitle: "50/70m plein air", emoji: "☀️" , disabled : true }
+        { slug: "tir18m", label: "Tir à 18m", subtitle: "Compétitions en salle", emoji: "🎯", disabled: false },
+        { slug: "tae_50_70", label: "Tir extérieur (à venir)", subtitle: "50/70m plein air", emoji: "☀️" , disabled : true }
     ];
 
     /** tableau des slugs sélectionnés (bindable) */
-    export let value = ["18m"];
+    export let value = ["tir18m"];
 
     /** nom du champ pour le POST (tableau) */
     export let name = "categories[]";
