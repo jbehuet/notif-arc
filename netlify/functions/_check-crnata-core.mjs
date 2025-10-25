@@ -2,10 +2,14 @@
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 import { getStore } from "@netlify/blobs";
-import * as events from "node:events";
 
 const SUBS_KEY = "subscribers.json";
 const EVENTS_KEY = "nouvelle_aquitaine_events.json";
+
+const CATEGORIES_NAME = {
+    "tir18m": "🎯 Tir à 18m",
+    "tae_50_70": "☀️ TAE 50/70m"
+};
 
 const URLS = {
     "tir18m": "/evenements/categories/tir-a-18m/",
@@ -41,127 +45,17 @@ async function scrapePaginated(startUrl) {
         });
 
         //trouver le lien "suivant"
-        const nextHref = $('a.next.page-numbers').attr('href') || null;
-        url =  nextHref
+        url = $('a.next.page-numbers').attr('href') || null;
     }
     return events;
 }
 
-export async function runCheck({ forceSend = false, dryRun = false }) {
-    console.log("run crnata function - force send : ", forceSend, " - dryRun", dryRun);
+export async function runCheck({ dryRun = false }) {
+    console.log("run crnata function - dryRun : ", dryRun);
+
     const ts = nowFR();
-
-    // scrapping
-    const eventsGlobal = Object.fromEntries(
-        await Promise.all(
-            ['tir18m'].map(async (category) => [
-                category,
-                await scrapePaginated(URLS[category])
-            ])
-        )
-    );
-
-    //return { statusCode: 200, headers: { 'content-type': 'application/json; charset=utf-8' }, body: JSON.stringify(eventsGlobal)};
-
-    // --- état précédent ---
-    let prevWrap = (await getJson(EVENTS_KEY)) || { savedAt: null, tir18m: [] };
-    const prev = prevWrap.tir18m;
-    const prevUrls = new Set(prev.map(e => e.href));
-
-    //TODO faire pour chaque categorie - voir pour grouper dans le mail des personnes qui le souhaite les categories suivi
-    const newItems = eventsGlobal["tir18m"].filter((e) => !prevUrls.has(e.href));
-    const knownItems = eventsGlobal["tir18m"].filter((e) => prevUrls.has(e.href));
-
-    // première exécution ? juste snapshot si pas de FIRST_RUN_NOTIFY
-    const firstRun = prev.length === 0;
-    if (firstRun) {
-        await setJson(EVENTS_KEY, {savedAt: ts, tir18m: events});
-        console.log("Snapshot saved (first run)");
-        return { statusCode: 200,  body:"Snapshot saved (first run)" };
-    }
-
-    // rien de neuf et pas de FORCE_SEND
-    if (!newItems.length && !forceSend) {
-        if (!dryRun) {
-            await setJson(EVENTS_KEY, {savedAt: ts, tir18m: eventsGlobal["tir18m"]});
-        }
-        console.log("No new events");
-        return { statusCode: 200, body: "No new events" };
-    }
-
-    // --- construire l'email ---
-    let htmlBody = "";
-    if (newItems.length) {
-        const newHtml = newItems.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
-        const knownHtml = knownItems.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
-        htmlBody = `
-      <div>
-        <h3>Évènements tir à 18 m — Nouveautés</h3>
-      </div>
-      <h4>Nouveaux :</h4>
-      <ul>${newHtml}</ul>
-      <h4>Déjà connus :</h4>
-      <ul>${knownHtml}</ul>
-      <p><small style="color:#666">mis à jour le ${ts}</small></p>
-      <hr/>
-      <p style="font-size:small;color:#666;">
-        Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
-        <a href="${process.env.APP_BASE_URL}/unsubscribe">Se désinscrire</a>
-      </p>
-    `;
-    } else {
-        const allHtml = events.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
-        htmlBody = `
-      <div>
-        <h3>Pas de nouveauté — envoi manuel</h3>
-      </div>
-      <ul>${allHtml}</ul>
-      <p><small style="color:#666">mis à jour le ${ts}</small></p>
-      <hr/>
-      <p style="font-size:small;color:#666;">
-        Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
-        <a href="${process.env.APP_BASE_URL}/unsubscribe">Se désinscrire</a>
-      </p>
-    `;
-    }
-
-    // --- destinataires ---
-    const subs = (await getJson(SUBS_KEY )) || [];
-    const toList = subs.filter(s => s.status === "confirmed" && s.email !== "jbehuet@gmail.com").map(s => s.email);
-    if (!toList.length) {
-        await setJson(EVENTS_KEY, {savedAt: ts, tir18m: eventsGlobal["tir18m"]});
-        console.log("No confirmed subscribers");
-        return { statusCode: 200, body: "No confirmed subscribers"};
-    }
-
-    if (dryRun) {
-        console.log("DRY_RUN: preview only\n", htmlBody);
-        return { statusCode: 200, body : htmlBody };
-    }
-
-    // --- envoi via Resend ---
-    const resp = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-            from: process.env.RESEND_FROM,
-            to: "jbehuet@gmail.com",
-            bcc: toList,
-            subject: "NotifArc — Nouveaux mandats",
-            html: htmlBody
-        })
-    });
-    console.log("Resend:", resp.status, await resp.text());
-
-    await setJson(EVENTS_KEY, {savedAt: ts, tir18m: eventsGlobal["tir18m"]});
-    console.log(`OK (new: ${newItems.length}, sent: ${toList.length})`);
-    return { statusCode: 200, body : `OK (new: ${newItems.length}, sent: ${toList.length})` };
-}
-
-export async function runCheck_({ forceSend = false, dryRun = false }) {
-    console.log("run crnata function - force send : ", forceSend, " - dryRun", dryRun);
-
     const categories = Object.keys(URLS);
+    const allEventsByCategory = {};
     const newEventsByCategories = {};
     const knowEventsByCategories = {};
 
@@ -169,7 +63,7 @@ export async function runCheck_({ forceSend = false, dryRun = false }) {
 
     for (const category of categories) {
         const lastEvents = await scrapePaginated(URLS[category])
-        newEventsByCategories[category] = lastEvents;
+        allEventsByCategory[category] = lastEvents;
 
         let prevEvents = []
         if (storeEvents.hasOwnProperty(category)) {
@@ -180,20 +74,28 @@ export async function runCheck_({ forceSend = false, dryRun = false }) {
         const prevUrls = new Set(prevEvents.map(e => e.href));
         const newEvents = lastEvents.filter((e) => !prevUrls.has(e.href));
         const knowEvents = lastEvents.filter((e) => prevUrls.has(e.href));
-        // TODO Met à jour le store
 
         // garde les nouveautés
         newEventsByCategories[category] = newEvents;
         knowEventsByCategories[category] = knowEvents;
     }
 
-    const changedCategories = Object.entries(newEventsByCategories)
+    // Met à jour le store
+    await setJson(EVENTS_KEY, { savedAt: ts , ...allEventsByCategory});
+
+    let changedCategories = Object.entries(newEventsByCategories)
         .filter(([_, evts]) => evts.length > 0)
         .map(([cat]) => cat);
 
+
+    if (dryRun) {
+        // En mode test : toutes les catégories sont considérées comme "changées"
+        changedCategories = Object.keys(URLS);
+        console.log("Mode dry run → toutes les catégories considérées comme modifiées");
+    }
+
     if (changedCategories.length === 0) {
-        console.log("Aucun nouvel événement — pas de notification.");
-        return;
+        return { statusCode: 200,  body:"Aucun nouvel événement — pas de notification." };
     }
 
     console.log("Catégories avec nouveautés :", changedCategories);
@@ -215,45 +117,99 @@ export async function runCheck_({ forceSend = false, dryRun = false }) {
 
     for (const [sig, seg] of segments) {
         // union des nouveaux events de ces catégories
-        const newEvents = seg.cats.flatMap(c => newEventsByCategories[c]);
-        const knowEvents = seg.cats.flatMap(c => knowEventsByCategories[c]);
+        const newEvents = {};
+        const knowEvents = {};
 
-        // Créer le contenu de l’email
-        //const html = buildEmail(seg.cats, events);
-        const html = buildEmail(seg.cats, newEvents, knowEvents);
-
-        // Envoyer à tous les utilisateurs du segment (ici simple console)
-        for (const u of seg.users) {
-            await sendEmail(u.email, html);
+        for (const cat of seg.cats) {
+            newEvents[cat] = newEventsByCategories[cat] || [];
+            knowEvents[cat] = knowEventsByCategories[cat] || [];
         }
 
-        console.log(`✉️  Envoyé à ${seg.users.length} utilisateur(s) pour [${sig}]`);
+        // Construit l'email
+        const html = buildEmail(seg.cats, newEvents, knowEvents, ts);
+
+        const toList = seg.users.filter(s => s.status === "confirmed" && s.email !== "jbehuet@gmail.com").map(s => s.email);
+        if (!toList.length) {
+            return { statusCode: 200, body: "Aucune subscribers confirmés"};
+        }
+
+        if (dryRun) {
+            console.log(`🧪 [Dry Run] Email pour [${sig}] :`, toList);
+            console.log(html);
+        } else {
+            // --- envoi via Resend ---
+            const resp = await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    from: process.env.RESEND_FROM,
+                    to: "jbehuet@gmail.com",
+                    bcc: toList,
+                    subject: "NotifArc — Nouveaux mandats",
+                    html: html
+                })
+            });
+            console.log("Resend:", resp.status, await resp.text());
+        }
+
+        console.log(
+            `✉️  ${dryRun ? "Prévisualisé" : "Envoyé"} à ${
+                seg.users.length
+            } utilisateur(s) pour [${sig}]`
+        );
     }
-    return { statusCode: 200, headers: { 'content-type': 'application/json; charset=utf-8' }, body: JSON.stringify({segments})};
+    return { statusCode: 200, body: "success"};
 }
 
-function buildEmail(categories, newEvents, knowEvents) {
-    const newHtml = newEvents.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
-    const knownHtml = knownEvents.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
-    const htmlBody = `
+function buildEmail(categories, newEvents, knowEvents, ts) {
+    const header = `
+     <header>
+        <a href="https://www.notif-arc.fr" style="align-items:center;display:flex;font-size: 2rem;color: #3a9092;text-decoration:none;">
+            <img src="https://www.notif-arc.fr/notif-arc-logo-512.png" width="68" alt="logo">
+            <strong>NotifArc</strong>
+        </a> 
+        <p style="margin:0 0 2rem 0;font-size:1rem;color:#646b79;font-style:italic;">Ne manquez plus aucune compétition.</p>
+    </header>
+  `;
+
+    let htmlBody = `
+      ${header}
+      <hr />
       <div>
-        <h3>Évènements tir à l\'arc — Nouveautés</h3>
+        <h2>Nouveaux Mandats</h2>
       </div>
-      <h4>Nouveaux :</h4>
-      <ul>${newHtml}</ul>
-      <h4>Déjà connus :</h4>
-      <ul>${knownHtml}</ul>
-      <p><small style="color:#666">mis à jour le ${ts}</small></p>
+    `;
+
+    for (const category of categories) {
+        const newHtml = newEvents[category].map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
+        const knowHtml = knowEvents[category].map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
+        htmlBody += `<hr /><div><h3>Mandat ${CATEGORIES_NAME[category]}</h3></div>`;
+
+        if (newEvents[category].length > 0 ) {
+            htmlBody += `
+                <h4>Nouveaux :</h4>
+                <ul>${newHtml}</ul>
+            `;
+        }
+
+        if (knowEvents[category].length > 0 ) {
+            htmlBody += `
+                <h4>Déjà connus :</h4>
+                <ul>${knowHtml}</ul>
+            `;
+        }
+    }
+
+    htmlBody += `
+      <p><small style="font-size:.8rem;color:#646b79;font-style:italic;">mis à jour le ${ts}</small></p>
       <hr/>
-      <p style="font-size:small;color:#666;">
+      <p style="font-size:1rem;color:#646b79;">
         Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
         <a href="${process.env.APP_BASE_URL}/unsubscribe">Se désinscrire</a>
       </p>
-    `;
-
+    `
     return htmlBody;
 }
-
 
 // Store
 const BUCKET = "notif-arc";
