@@ -8,3 +8,6 @@
 
 [functions."check-crnata"]
   schedule = "0 5,11,17 * * *"
+
+[functions."clean-logs"]
+  schedule = "0 1 * * *"
