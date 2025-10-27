@@ -2,8 +2,9 @@
 import { getStore } from "@netlify/blobs";
 
 export async function handler() {
-    const res = await purgeLogs(false)
-    return { statusCode: 200, body: JSON.stringify(res) };
+    const DRY_RUN = String(process.env.DRY_RUN || "").toLowerCase() === "1";
+    const res = await purgeLogs(DRY_RUN)
+    return { statusCode: 200 };
 }
 
 export async function purgeLogs(dryRun = false) {
