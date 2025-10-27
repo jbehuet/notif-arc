@@ -59,6 +59,9 @@ export async function runCheck({ dryRun = false }) {
     const newEventsByCategories = {};
     const knowEventsByCategories = {};
 
+    const log = {traces : []}
+    log.traces.push(`${ts} - start runCheck`);
+
     const storeEvents = await getJson(EVENTS_KEY);
 
     for (const category of categories) {
@@ -95,10 +98,12 @@ export async function runCheck({ dryRun = false }) {
     }
 
     if (changedCategories.length === 0) {
+        log.traces.push(`${ts} - Aucun nouvel événement — pas de notification.`);
         return { statusCode: 200,  body:"Aucun nouvel événement — pas de notification." };
     }
 
     console.log("Catégories avec nouveautés :", changedCategories);
+    log.traces.push(`${ts} - Catégories avec nouveautés : ${changedCategories}`);
 
     const subscibers = (await getJson(SUBS_KEY )) || [];
     const usersToNotify = subscibers.filter(u =>
@@ -115,8 +120,6 @@ export async function runCheck({ dryRun = false }) {
         segments.get(sig).users.push(user);
     }
 
-    console.log("usersToNotify :", usersToNotify);
-
     for (const [sig, seg] of segments) {
         // union des nouveaux events de ces catégories
         const newEvents = {};
@@ -127,6 +130,8 @@ export async function runCheck({ dryRun = false }) {
             knowEvents[cat] = knowEventsByCategories[cat] || [];
             console.log(`Nouveaux mandats [${cat}] : ${newEvents[cat].length}`);
             console.log(`Mandats connus [${cat}] : ${knowEvents[cat].length}`);
+            log.traces.push(`${ts} - Nouveaux mandats [${cat}] : ${newEvents[cat].length}`);
+            log.traces.push(`${ts} - Mandats connus [${cat}] : ${knowEvents[cat].length}`);
         }
 
         // Construit l'email
@@ -134,11 +139,14 @@ export async function runCheck({ dryRun = false }) {
 
         const toList = seg.users.map(s => s.email);
         if (!toList.length) {
+            log.traces.push(`${ts} - Aucun destinataires`);
             return { statusCode: 200, body: "Aucun destinataires"};
         }
 
         if (dryRun) {
+            log.traces.push(`${ts} - [Dry Run] Email pour [${sig}] : ${toList}`);
             console.log(`🧪 [Dry Run] Email pour [${sig}] :`, toList);
+            log.traces.push(`${ts} - ${html}`);
             console.log(html);
         } else {
             // --- envoi via Resend ---
@@ -153,15 +161,15 @@ export async function runCheck({ dryRun = false }) {
                     html: html
                 })
             });
-            console.log("Resend:", resp.status, await resp.text());
+            const text = await resp.text();
+            console.log("Resend:", resp.status, text);
+            log.traces.push(`${ts} - Resend: ${resp.status} : ${text}`);
         }
 
-        console.log(
-            `✉️  ${dryRun ? "Prévisualisé" : "Envoyé"} à ${
-                seg.users.length
-            } utilisateur(s) pour [${sig}]`
-        );
+        console.log(`✉️  ${dryRun ? "Prévisualisé" : "Envoyé"} à ${seg.users.length} utilisateur(s) pour [${sig}]`);
+        log.traces.push(`${ts} - ${dryRun ? "Prévisualisé" : "Envoyé"} à ${seg.users.length} utilisateur(s) pour [${sig}]`);
     }
+    await setJson(`logs_${Date.now()}.json`, log)
     return { statusCode: 200, body: "success"};
 }
 
