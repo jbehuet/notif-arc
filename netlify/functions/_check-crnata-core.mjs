@@ -115,7 +115,10 @@ export async function runCheck({ dryRun = false }) {
         segments.get(sig).users.push(user);
     }
 
+    console.log("usersToNotify :", usersToNotify);
+
     for (const [sig, seg] of segments) {
+        console.log(sig, seg)
         // union des nouveaux events de ces catégories
         const newEvents = {};
         const knowEvents = {};
