@@ -102,7 +102,7 @@ export async function runCheck({ dryRun = false }) {
 
     const subscibers = (await getJson(SUBS_KEY )) || [];
     const usersToNotify = subscibers.filter(u =>
-        u.categories.some(c => changedCategories.includes(c))
+        u.categories.some(c => changedCategories.includes(c)) && u.status === "confirmed" && u.email !== "jbehuet@gmail.com"
     );
 
     const segments = new Map();
@@ -118,7 +118,6 @@ export async function runCheck({ dryRun = false }) {
     console.log("usersToNotify :", usersToNotify);
 
     for (const [sig, seg] of segments) {
-        console.log(sig, seg)
         // union des nouveaux events de ces catégories
         const newEvents = {};
         const knowEvents = {};
@@ -126,14 +125,16 @@ export async function runCheck({ dryRun = false }) {
         for (const cat of seg.cats) {
             newEvents[cat] = newEventsByCategories[cat] || [];
             knowEvents[cat] = knowEventsByCategories[cat] || [];
+            console.log(`Nouveaux mandats [${cat}] : ${newEvents[cat].length}`);
+            console.log(`Mandats connus [${cat}] : ${knowEvents[cat].length}`);
         }
 
         // Construit l'email
         const html = buildEmail(seg.cats, newEvents, knowEvents, ts);
 
-        const toList = seg.users.filter(s => s.status === "confirmed" && s.email !== "jbehuet@gmail.com").map(s => s.email);
+        const toList = seg.users.map(s => s.email);
         if (!toList.length) {
-            return { statusCode: 200, body: "Aucune subscribers confirmés"};
+            return { statusCode: 200, body: "Aucun destinataires"};
         }
 
         if (dryRun) {
