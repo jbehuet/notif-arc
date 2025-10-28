@@ -99,6 +99,7 @@ export async function runCheck({ dryRun = false }) {
 
     if (changedCategories.length === 0) {
         log.traces.push(`${ts} - Aucun nouvel événement — pas de notification.`);
+        await setJson(`logs_${Date.now()}.json`, log)
         return { statusCode: 200,  body:"Aucun nouvel événement — pas de notification." };
     }
 
@@ -140,6 +141,7 @@ export async function runCheck({ dryRun = false }) {
         const toList = seg.users.map(s => s.email);
         if (!toList.length) {
             log.traces.push(`${ts} - Aucun destinataires`);
+            await setJson(`logs_${Date.now()}.json`, log)
             return { statusCode: 200, body: "Aucun destinataires"};
         }
 
