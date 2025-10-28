@@ -15,13 +15,9 @@ export async function purgeLogs(dryRun = false) {
     });
     const cutoff = Date.now() - 48 * 60 * 60 * 1000;
 
-    const { blobs } = await store.list({ prefix: "logs_" });
-    if (!blobs?.length) {
-        console.log("Aucun blob trouvé avec le préfixe logs_");
-        return { matched: 0, deleted: 0 };
-    }
-
-    const toDelete = blobs.filter((b) => {
+    // Suppression anciens logs ---
+    const { blobs: logs } = await store.list({ prefix: "logs/" });
+    const toDelete = logs.filter((b) => {
         const parts = b.key.split("_");
         const idPart = parts[1].replace(".json", "");
         const ts = Number(idPart);
@@ -30,22 +26,29 @@ export async function purgeLogs(dryRun = false) {
 
     console.log(`[purge] ${toDelete.length} logs à supprimer (plus vieux que 48h)`);
 
-    if (dryRun) {
-        toDelete.forEach((b) =>
-            console.log(`DRY-RUN → ${b.key} (modifié le ${b.last_modified})`)
-        );
-        return { matched: toDelete.length, deleted: 0, dryRun: true };
+    if (!dryRun) {
+        await Promise.allSettled(toDelete.map((b) => store.delete(b.key)));
+    } else {
+        toDelete.forEach((b) => console.log("DRY-RUN →", b.key));
     }
 
-    const results = await Promise.allSettled(
-        toDelete.map((b) => store.delete(b.key))
-    );
+    // Suppression complète des locks ---
+    const { blobs: locks } = await store.list({ prefix: "locks/" });
+    console.log(`[purge] ${locks.length} locks à supprimer`);
 
-    const deleted = results.filter((r) => r.status === "fulfilled").length;
-    const failed = results.length - deleted;
+    if (!dryRun) {
+        await Promise.allSettled(locks.map((b) => store.delete(b.key)));
+    } else {
+        locks.forEach((b) => console.log("   DRY-RUN →", b.key));
+    }
 
-    console.log(`[purge] Supprimé ${deleted}/${results.length} blobs`);
-    if (failed) console.warn(`[purge] ${failed} échecs de suppression.`);
-
-    return { matched: toDelete.length, deleted, dryRun: false };
+    console.log(`[purge] Logs ${deletedLogs}/${results.length} et Locks ${locks.length} supprimés`);
+    return {
+        statusCode: 200,
+        body: JSON.stringify({
+            dryRun: dryRun,
+            deletedLogs: dryRun ? 0 : toDelete.length,
+            deletedLocks: dryRun ? 0 : locks.length
+        }),
+    };
 }

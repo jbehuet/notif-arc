@@ -26,7 +26,10 @@ async function scrapePaginated(startUrl) {
 
     while (url) {
         const res = await fetch("https://www.crnata.fr" + url, { headers: { 'User-Agent': 'NotifArc Netlify Cron' } });
-        if (!res.ok) throw new Error(`Fetch ${res.status} @ ${url}`);
+        if (!res.ok) {
+            await setJson(`logs/logs_${Date.now()}_ERROR.json`, {status: res.status, url: url})
+            throw new Error(`Fetch ${res.status} @ ${url}`);
+        }
 
         const html = await res.text();
         const $ = cheerio.load(html);
@@ -99,7 +102,7 @@ export async function runCheck({ dryRun = false }) {
 
     if (changedCategories.length === 0) {
         log.traces.push(`${ts} - Aucun nouvel événement — pas de notification.`);
-        await setJson(`logs_${Date.now()}.json`, log)
+        await setJson(`logs/logs_${Date.now()}.json`, log)
         return { statusCode: 200,  body:"Aucun nouvel événement — pas de notification." };
     }
 
@@ -141,7 +144,7 @@ export async function runCheck({ dryRun = false }) {
         const toList = seg.users.map(s => s.email);
         if (!toList.length) {
             log.traces.push(`${ts} - Aucun destinataires`);
-            await setJson(`logs_${Date.now()}.json`, log)
+            await setJson(`logs/logs_${Date.now()}.json`, log)
             return { statusCode: 200, body: "Aucun destinataires"};
         }
 
@@ -171,7 +174,7 @@ export async function runCheck({ dryRun = false }) {
         console.log(`✉️  ${dryRun ? "Prévisualisé" : "Envoyé"} à ${seg.users.length} utilisateur(s) pour [${sig}]`);
         log.traces.push(`${ts} - ${dryRun ? "Prévisualisé" : "Envoyé"} à ${seg.users.length} utilisateur(s) pour [${sig}]`);
     }
-    await setJson(`logs_${Date.now()}.json`, log)
+    await setJson(`logs/logs_${Date.now()}.json`, log)
     return { statusCode: 200, body: "success"};
 }
 
