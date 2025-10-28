@@ -87,7 +87,9 @@ export async function runCheck({ dryRun = false }) {
     }
 
     // Met à jour le store
-    await setJson(EVENTS_KEY, { savedAt: ts , ...allEventsByCategory});
+    if (!dryRun) {
+        await setJson(EVENTS_KEY, { savedAt: ts , ...allEventsByCategory});
+    }
 
     let changedCategories = Object.entries(newEventsByCategories)
         .filter(([_, evts]) => evts.length > 0)
