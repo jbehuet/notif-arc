@@ -20,14 +20,14 @@ function nowFR() {
     return new Date().toLocaleString("fr-FR", { timeZone: process.env.LOCAL_TZ || "Europe/Paris" });
 }
 
-async function scrapePaginated(startUrl) {
+async function scrapePaginated(startUrl, slot) {
     let url = startUrl;
     const events = [];
 
     while (url) {
         const res = await fetch("https://www.crnata.fr" + url, { headers: { 'User-Agent': 'NotifArc Netlify Cron' } });
         if (!res.ok) {
-            await setJson(`logs/logs_${Date.now()}_ERROR.json`, {status: res.status, url: url})
+            await setJson(`logs/${Date.now()}_${slot}_ERROR.json`, {status: res.status, url: url})
             throw new Error(`Fetch ${res.status} @ ${url}`);
         }
 
@@ -53,8 +53,10 @@ async function scrapePaginated(startUrl) {
     return events;
 }
 
-export async function runCheck({ dryRun = false }) {
+export async function runCheck({ dryRun = false, slot }) {
     console.log("run crnata function - dryRun : ", dryRun);
+
+    const LOG_KEY = `logs/${Date.now()}_${slot}.json`;
 
     const ts = nowFR();
     const categories = Object.keys(URLS);
@@ -68,7 +70,7 @@ export async function runCheck({ dryRun = false }) {
     const storeEvents = await getJson(EVENTS_KEY);
 
     for (const category of categories) {
-        const lastEvents = await scrapePaginated(URLS[category])
+        const lastEvents = await scrapePaginated(URLS[category], slot)
         allEventsByCategory[category] = lastEvents;
 
         let prevEvents = []
@@ -104,7 +106,7 @@ export async function runCheck({ dryRun = false }) {
 
     if (changedCategories.length === 0) {
         log.traces.push(`${ts} - Aucun nouvel événement — pas de notification.`);
-        await setJson(`logs/logs_${Date.now()}.json`, log)
+        await setJson(LOG_KEY, log)
         return { statusCode: 200,  body:"Aucun nouvel événement — pas de notification." };
     }
 
@@ -145,9 +147,8 @@ export async function runCheck({ dryRun = false }) {
 
         const toList = seg.users.map(s => s.email);
         if (!toList.length) {
-            log.traces.push(`${ts} - Aucun destinataires`);
-            await setJson(`logs/logs_${Date.now()}.json`, log)
-            return { statusCode: 200, body: "Aucun destinataires"};
+            log.traces.push(`${ts} - Aucun destinataire pour le segment [${sig}]`);
+            continue; // passer au segment suivant
         }
 
         if (dryRun) {
@@ -176,14 +177,14 @@ export async function runCheck({ dryRun = false }) {
         console.log(`✉️  ${dryRun ? "Prévisualisé" : "Envoyé"} à ${seg.users.length} utilisateur(s) pour [${sig}]`);
         log.traces.push(`${ts} - ${dryRun ? "Prévisualisé" : "Envoyé"} à ${seg.users.length} utilisateur(s) pour [${sig}]`);
     }
-    await setJson(`logs/logs_${Date.now()}.json`, log)
+    await setJson(LOG_KEY, log)
     return { statusCode: 200, body: "success"};
 }
 
 function buildEmail(categories, newEvents, knowEvents, ts) {
     const header = `
      <header>
-        <a href="https://www.notif-arc.fr" style="align-items:center;display:flex;font-size: 2rem;color: #3a9092;text-decoration:none;">
+        <a href="https://www.notif-arc.fr" style="display:flex;align-items:center;font-size: 2rem;color: #3a9092;text-decoration:none;">
             <img src="https://www.notif-arc.fr/notif-arc-logo-512.png" width="68" alt="logo">
             <strong>NotifArc</strong>
         </a> 

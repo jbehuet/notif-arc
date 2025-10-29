@@ -16,19 +16,33 @@ export async function handler() {
     const now = new Date();
     const slot = now.toISOString().slice(0, 13); // ex: "2025-10-28T11"
     const lockKey = `locks/${slot}`;
+    const runId = `${now.toISOString()}-${Math.random().toString(36).slice(2, 8)}`;
 
+    // si déjà présent, on stoppe immédiatement
     const existing = await store.get(lockKey);
     if (existing?.data) {
         console.log("Skip: déjà exécuté pour cette heure", slot);
-        await store.set(`logs_${Date.now()}_WARN.json`, `duplicate run skipped for ${slot}`)
-        return { statusCode: 200, body: `duplicate run skipped for ${slot}` };
+        await store.set(`logs/logs_${Date.now()}_${slot}_WARN.json`, `duplicate run skipped for ${slot}`);
+        return { statusCode: 200, body: `already run for ${slot}` };
     }
 
-    // On pose le lock (timestamp en contenu)
-    await store.set(lockKey, String(Date.now()), { contentType: "text/plain" });
-    console.log("Lock posé pour", slot);
+    // on écrit notre runId
+    await store.set(lockKey, runId);
+
+    // petite latence
+    await new Promise((r) => setTimeout(r, 400));
+
+    const check = await store.get(lockKey);
+    const current = check?.data?.toString();
+    if (current !== runId) {
+        console.log("Skip: lock perdu (autre run a la main)", { slot, ours: runId, theirs: current });
+        await store.set(`logs/logs_${Date.now()}_${slot}_WARN.json`, `lost lock race for ${slot}`);
+        return { statusCode: 200, body: `lost lock race for ${slot}` };
+    }
+
+    console.log("Lock posé pour", slot, "runId:", runId);
     // --- Fin du verrou ---
 
-    await runCheck({dryRun: DRY_RUN})
+    await runCheck({dryRun: DRY_RUN, slot})
     return { statusCode: 200};
 }
