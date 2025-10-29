@@ -11,6 +11,10 @@
 }
 
 header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
     a, a:visited{
       font-size: 2rem;
       text-decoration: none;

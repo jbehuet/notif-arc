@@ -33,7 +33,8 @@
 <main class="container">
     <article>
         <header>
-            <strong>Mandats ligue : Nouvelle Aquitaine</strong>
+            <strong>Mandats ligue - Nouvelle Aquitaine</strong>
+            <img src="/logo-nouvelle-aquitaine.png" alt="logo nouvelle-aquitaine"  width="120" />
         </header>
         <p>Inscrivez-vous pour être notifié quand un nouveau mandat est publié sur <a href="https://www.crnata.fr" target="_blank">CRNATA</a>.</p>
         <form onsubmit={submit} oninput={() => (message = '')}>
