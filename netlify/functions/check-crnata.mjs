@@ -5,9 +5,9 @@ import { getStore } from "@netlify/blobs";
 export async function handler() {
     const DRY_RUN = String(process.env.DRY_RUN || "").toLowerCase() === "1";
 
-    if (process.env.CONTEXT && process.env.CONTEXT !== "production") {
-        console.log("Skip: not production");
-        return { statusCode: 200, body: "skip: not production" };
+    if (!["production"].includes(process.env.CONTEXT)) {
+        console.log("⏸Cron ignoré : contexte =", process.env.CONTEXT);
+        return { statusCode: 200, body: "skip non-production" };
     }
 
     // --- Début du verrou (lock par heure UTC) ---
