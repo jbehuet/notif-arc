@@ -17,19 +17,19 @@ export async function purgeLogs(dryRun = false) {
 
     // Suppression anciens logs ---
     const { blobs: logs } = await store.list({ prefix: "logs/" });
-    const toDelete = logs.filter((b) => {
+    const logsToDelete = logs.filter((b) => {
         const parts = b.key.split("_");
         const idPart = parts[1].replace(".json", "");
         const ts = Number(idPart);
         return !isNaN(ts) && ts < cutoff;
     });
 
-    console.log(`[purge] ${toDelete.length} logs à supprimer (plus vieux que 48h)`);
+    console.log(`[purge] ${logsToDelete.length} logs à supprimer (plus vieux que 48h)`);
 
     if (!dryRun) {
         await Promise.allSettled(toDelete.map((b) => store.delete(b.key)));
     } else {
-        toDelete.forEach((b) => console.log("DRY-RUN →", b.key));
+        logsToDelete.forEach((b) => console.log("DRY-RUN →", b.key));
     }
 
     // Suppression complète des locks ---
@@ -42,12 +42,12 @@ export async function purgeLogs(dryRun = false) {
         locks.forEach((b) => console.log("   DRY-RUN →", b.key));
     }
 
-    console.log(`[purge] Logs ${deletedLogs}/${results.length} et Locks ${locks.length} supprimés`);
+    console.log(`[purge] Logs ${logsToDelete.length} et Locks ${locks.length} supprimés`);
     return {
         statusCode: 200,
         body: JSON.stringify({
             dryRun: dryRun,
-            deletedLogs: dryRun ? 0 : toDelete.length,
+            deletedLogs: dryRun ? 0 : logsToDelete.length,
             deletedLocks: dryRun ? 0 : locks.length
         }),
     };
