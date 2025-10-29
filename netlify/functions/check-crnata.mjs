@@ -5,6 +5,11 @@ import { getStore } from "@netlify/blobs";
 export async function handler() {
     const DRY_RUN = String(process.env.DRY_RUN || "").toLowerCase() === "1";
 
+    if (process.env.CONTEXT && process.env.CONTEXT !== "production") {
+        console.log("Skip: not production");
+        return { statusCode: 200, body: "skip: not production" };
+    }
+
     // --- Début du verrou (lock par heure UTC) ---
     const store = getStore({
         name: "notif-arc",
