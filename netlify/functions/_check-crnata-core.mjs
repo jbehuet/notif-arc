@@ -20,14 +20,14 @@ function nowFR() {
     return new Date().toLocaleString("fr-FR", { timeZone: process.env.LOCAL_TZ || "Europe/Paris" });
 }
 
-async function scrapePaginated(startUrl, slot) {
+async function scrapePaginated(startUrl) {
     let url = startUrl;
     const events = [];
 
     while (url) {
         const res = await fetch("https://www.crnata.fr" + url, { headers: { 'User-Agent': 'NotifArc Netlify Cron' } });
         if (!res.ok) {
-            await setJson(`logs/${Date.now()}_${slot}_ERROR.json`, {status: res.status, url: url})
+            await setJson(`logs/${Date.now()}_ERROR.json`, {status: res.status, url: url})
             throw new Error(`Fetch ${res.status} @ ${url}`);
         }
 
@@ -53,10 +53,10 @@ async function scrapePaginated(startUrl, slot) {
     return events;
 }
 
-export async function runCheck({ dryRun = false, slot }) {
+export async function runCheck({ dryRun = false }) {
     console.log("run crnata function - dryRun : ", dryRun);
 
-    const LOG_KEY = `logs/${Date.now()}_${slot}.json`;
+    const LOG_KEY = `logs/${Date.now()}.json`;
 
     const ts = nowFR();
     const categories = Object.keys(URLS);
@@ -70,7 +70,7 @@ export async function runCheck({ dryRun = false, slot }) {
     const storeEvents = await getJson(EVENTS_KEY);
 
     for (const category of categories) {
-        const lastEvents = await scrapePaginated(URLS[category], slot)
+        const lastEvents = await scrapePaginated(URLS[category])
         allEventsByCategory[category] = lastEvents;
 
         let prevEvents = []

@@ -4,6 +4,6 @@ import { getStore } from "@netlify/blobs";
 
 export async function handler() {
     const DRY_RUN = String(process.env.DRY_RUN || "").toLowerCase() === "1";
-    await runCheck({dryRun: DRY_RUN, slot})
+    await runCheck({dryRun: DRY_RUN})
     return { statusCode: 200};
 }
