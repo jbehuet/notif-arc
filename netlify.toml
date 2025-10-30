@@ -7,7 +7,7 @@
   included_files = ["src/lib/**"]
 
 [functions."check-crnata"]
-  schedule = "0 */2 * * *"
+  schedule = "0 */6 * * *"
 
 [functions."clean-logs"]
   schedule = "0 1 * * *"
