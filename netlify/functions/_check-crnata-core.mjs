@@ -69,6 +69,18 @@ export async function runCheck({ dryRun = false }) {
 
     const storeEvents = await getJson(EVENTS_KEY);
 
+    // Vérifie si l’exécution précédente est trop récente
+    if (storeEvents.savedAt) {
+        const last = parseFRDate(storeEvents.savedAt);
+        const diffMin = (Date.now() - last.getTime()) / 60000;
+        if (diffMin < 15) { // ou 120 pour 2h
+            console.log(`Dernier run ${diffMin.toFixed(1)} min → skip`);
+            log.traces.push(`${ts} - Dernier run ${diffMin.toFixed(1)} min → skip`);
+            await setJson(LOG_KEY, log)
+            return { statusCode: 200, body: `skip: ${diffMin.toFixed(1)} min ago` };
+        }
+    }
+
     for (const category of categories) {
         const lastEvents = await scrapePaginated(URLS[category])
         allEventsByCategory[category] = lastEvents;
@@ -251,4 +263,11 @@ async function setJson(key, data) {
             token: process.env.NETLIFY_AUTH_TOKEN
         });
     await store.set(key, JSON.stringify(data, null, 2));
+}
+
+function parseFRDate(str) {
+    const [datePart, timePart] = str.split(" ");
+    const [day, month, year] = datePart.split("/").map(Number);
+    const [hour, minute, second] = timePart.split(":").map(Number);
+    return new Date(year, month - 1, day, hour, minute, second);
 }
