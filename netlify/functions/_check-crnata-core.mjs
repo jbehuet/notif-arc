@@ -72,7 +72,7 @@ export async function runCheck({ dryRun = false }) {
     // Vérifie si l’exécution précédente est trop récente
     if (storeEvents.savedAtEpoch) {
         const diffMin = (Date.now() - storeEvents.savedAtEpoch) / 60000;
-        if (diffMin < 15) {
+        if (diffMin < 110) {
             console.log(`Dernier run ${diffMin.toFixed(1)} min → skip`);
             log.traces.push(`${ts} - Dernier run ${diffMin.toFixed(1)} min → skip`);
             await setJson(LOG_KEY, log);
