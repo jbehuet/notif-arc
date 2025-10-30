@@ -27,7 +27,7 @@ export async function purgeLogs(dryRun = false) {
     console.log(`[purge] ${logsToDelete.length} logs à supprimer (plus vieux que 48h)`);
 
     if (!dryRun) {
-        await Promise.allSettled(toDelete.map((b) => store.delete(b.key)));
+        await Promise.allSettled(logsToDelete.map((b) => store.delete(b.key)));
     } else {
         logsToDelete.forEach((b) => console.log("DRY-RUN →", b.key));
     }

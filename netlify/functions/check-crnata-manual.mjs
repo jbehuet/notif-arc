@@ -2,5 +2,5 @@
 import { runCheck } from "./_check-crnata-core.mjs";
 
 export async function handler() {
-    return await runCheck({dryRun: true, slot: "MANUAL" });
+    return await runCheck({dryRun: true });
 }
