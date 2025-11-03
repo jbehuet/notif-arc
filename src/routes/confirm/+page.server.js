@@ -2,7 +2,7 @@ import { verifyToken } from "$lib/tokens";
 import { getJson, setJson } from "$lib/store";
 import {RESEND_API_KEY, RESEND_FROM, SECRET_KEY, USE_LOCAL_STORE, DRY_RUN} from '$env/static/private';
 
-const EVENTS_KEY = 'last_events.json';
+const EVENTS_KEY = 'nouvelle_aquitaine_events.json';
 const SUBS_KEY = "subscribers.json";
 const useLocalStore = USE_LOCAL_STORE === "1";
 
@@ -22,8 +22,6 @@ export const load = async ({ url }) => {
     }
 
     let content = (await getJson(EVENTS_KEY, useLocalStore)) ?? { savedAt: null, tir18m: [] };
-
-    const events18m = content.tir18m;
     // envoi mail avec les evenements existants
     await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -36,20 +34,27 @@ export const load = async ({ url }) => {
             to: [v.email],
             subject: "NotifArc — Mandats",
             html: `
-            <div>
-                <h3>Événements tir à 18 m</h3>
-            </div>
-            <h4>Déjà connus :</h4>
-            <ul>
-                 ${events18m.map((s) => `<li><a href="${s[0]}" target="_blank">${s[1]}</a> ${s[2]}</li>`).join("")}
-            </ul>
-            <p><small style="color:#666">mis à jour le ${content.savedAt}</small></p>
-            <hr/>
-            <p style="font-size:small;color:#666;">
-            Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
-            <a href="${process.env.APP_BASE_URL}/unsubscribe">Se désinscrire</a>
-            </p>
-      `
+         <header>
+            <a href="https://www.notif-arc.fr" style="display:flex;align-items:center;font-size: 2rem;color: #3a9092;text-decoration:none;">
+                <img src="https://www.notif-arc.fr/notif-arc-logo-512.png" width="68" alt="logo">
+                <strong>NotifArc</strong>
+            </a> 
+            <p style="margin:0 0 2rem 0;font-size:1rem;color:#646b79;font-style:italic;">Ne manquez plus aucune compétition.</p>
+        </header>
+        <div>
+            <h2>Événements tir à 18 m</h2>
+        </div>
+        <h4>Déjà connus :</h4>
+        <ul>
+             ${events18m.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("")}
+        </ul>
+        <p><small style="color:#666">mis à jour le ${content.savedAt}</small></p>
+        <hr/>
+        <p style="font-size:small;color:#666;">
+        Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
+        <a href="${process.env.APP_BASE_URL}/unsubscribe">Se désinscrire</a>
+        </p>
+        `
         })
     });
 
