@@ -46,7 +46,7 @@ export const load = async ({ url }) => {
         </div>
         <h4>Déjà connus :</h4>
         <ul>
-             ${events18m.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("")}
+             ${content.tir18m.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("")}
         </ul>
         <p><small style="color:#666">mis à jour le ${content.savedAt}</small></p>
         <hr/>
