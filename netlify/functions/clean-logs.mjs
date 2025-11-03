@@ -17,7 +17,7 @@ export async function purgeLogs(dryRun = false) {
     // Suppression anciens logs ---
     const { blobs: logs } = await store.list({ prefix: "logs/" });
     const logsToDelete = logs.filter((b) => {
-        const idPart = b.key.replace(".json", "");
+        const idPart = b.key.split('/')[1].replace(".json", "");
         const ts = Number(idPart);
         return !isNaN(ts) && ts < cutoff;
     });
