@@ -2,19 +2,10 @@
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 import { getStore } from "@netlify/blobs";
+import { CATEGORIES, CRNATA_URLS } from '../../src/lib/shared/categories.js';
 
 const SUBS_KEY = "subscribers.json";
 const EVENTS_KEY = "nouvelle_aquitaine_events.json";
-
-const CATEGORIES_NAME = {
-    "tir18m": "🎯 Tir à 18m",
-    "tae_50_70": "☀️ TAE 50/70m"
-};
-
-const URLS = {
-    "tir18m": "/evenements/categories/tir-a-18m/",
-    "tae_50_70": "/evenements/categories/tae_50_70/"
-}
 
 function nowFR() {
     return new Date().toLocaleString("fr-FR", { timeZone: process.env.LOCAL_TZ || "Europe/Paris" });
@@ -59,7 +50,7 @@ export async function runCheck({ dryRun = false }) {
     const LOG_KEY = `logs/${Date.now()}.json`;
 
     const ts = nowFR();
-    const categories = Object.keys(URLS);
+    const categories = Object.keys(CRNATA_URLS);
     const allEventsByCategory = {};
     const newEventsByCategories = {};
     const knowEventsByCategories = {};
@@ -70,7 +61,7 @@ export async function runCheck({ dryRun = false }) {
     const storeEvents = (await getJson(EVENTS_KEY)) || {};
 
     // Vérifie si l’exécution précédente est trop récente
-    if (storeEvents.savedAtEpoch) {
+    if (storeEvents.savedAtEpoch && !dryRun) {
         const diffMin = (Date.now() - storeEvents.savedAtEpoch) / 60000;
         if (diffMin < 350) {
             console.log(`Dernier run ${diffMin.toFixed(1)} min → skip`);
@@ -82,7 +73,7 @@ export async function runCheck({ dryRun = false }) {
 
     const results = await Promise.all(
         categories.map(async (category) => {
-            const lastEvents = await scrapePaginated(URLS[category]);
+            const lastEvents = await scrapePaginated(CRNATA_URLS[category]);
             const prevEvents = storeEvents[category] || [];
 
             const prevUrls = new Set(prevEvents.map((e) => e.href));
@@ -99,7 +90,6 @@ export async function runCheck({ dryRun = false }) {
         knowEventsByCategories[category] = knowEvents;
     }
 
-
     // Met à jour le store
     if (!dryRun) {
         await setJson(EVENTS_KEY, { savedAt: ts, savedAtEpoch: new Date().getTime(), ...allEventsByCategory});
@@ -109,10 +99,9 @@ export async function runCheck({ dryRun = false }) {
         .filter(([_, evts]) => evts.length > 0)
         .map(([cat]) => cat);
 
-
     if (dryRun) {
         // En mode test : toutes les catégories sont considérées comme "changées"
-        changedCategories = Object.keys(URLS);
+        changedCategories = Object.keys(CRNATA_URLS);
         console.log("Mode dry run → toutes les catégories considérées comme modifiées");
     }
 
@@ -127,7 +116,7 @@ export async function runCheck({ dryRun = false }) {
 
     const subscibers = (await getJson(SUBS_KEY )) || [];
     const usersToNotify = subscibers.filter(u =>
-        u.categories.some(c => changedCategories.includes(c)) && u.status === "confirmed" && u.email !== "jbehuet@gmail.com"
+        u.categories.some(c => changedCategories.includes(c)) && u.status === "confirmed"
     );
 
     const segments = new Map();
@@ -189,7 +178,10 @@ export async function runCheck({ dryRun = false }) {
         console.log(`✉️  ${dryRun ? "Prévisualisé" : "Envoyé"} à ${seg.users.length} utilisateur(s) pour [${sig}]`);
         log.traces.push(`${ts} - ${dryRun ? "Prévisualisé" : "Envoyé"} à ${seg.users.length} utilisateur(s) pour [${sig}]`);
     }
-    await setJson(LOG_KEY, log)
+
+    if (!dryRun) {
+        await setJson(LOG_KEY, log)
+    }
     return { statusCode: 200, body: "success"};
 }
 
@@ -212,19 +204,24 @@ function buildEmail(categories, newEvents, knowEvents, ts) {
       </div>
     `;
 
-    for (const category of categories) {
-        const newHtml = newEvents[category].map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
-        const knowHtml = knowEvents[category].map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
-        htmlBody += `<hr /><div><h3>Mandat ${CATEGORIES_NAME[category]}</h3></div>`;
+    for (const categoryName of categories) {
+        if (newEvents[categoryName].length == 0 && knowEvents[categoryName].length == 0 ) {
+            continue
+        }
+        const category = CATEGORIES.find(c => c.slug == categoryName);
+        const newHtml = newEvents[categoryName].map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
+        const knowHtml = knowEvents[categoryName].map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
 
-        if (newEvents[category].length > 0 ) {
+        htmlBody += `<hr /><div><h3>Mandat ${category.emoji + " " + category.label}</h3></div>`;
+
+        if (newEvents[categoryName].length > 0 ) {
             htmlBody += `
                 <h4>Nouveaux :</h4>
                 <ul>${newHtml}</ul>
             `;
         }
 
-        if (knowEvents[category].length > 0 ) {
+        if (knowEvents[categoryName].length > 0 ) {
             htmlBody += `
                 <h4>Déjà connus :</h4>
                 <ul>${knowHtml}</ul>

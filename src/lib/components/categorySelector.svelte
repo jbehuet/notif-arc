@@ -1,8 +1,5 @@
 <script>
-    export let categories = [
-        { slug: "tir18m", label: "Tir à 18m", subtitle: "Compétitions en salle", emoji: "🎯", disabled: false },
-        { slug: "tae_50_70", label: "Tir extérieur (à venir)", subtitle: "50/70m plein air", emoji: "☀️" , disabled : true }
-    ];
+    import { CATEGORIES } from '$lib/shared/categories.js';
 
     /** tableau des slugs sélectionnés (bindable) */
     export let value = ["tir18m"];
@@ -17,7 +14,7 @@
     </header>
 
     <div class="grid cards">
-        {#each categories as c}
+        {#each CATEGORIES as c}
             <!-- Le label rend toute la carte cliquable -->
             <label class={"mandate-card " + (c.disabled ? "disabled" : "")}>
                 <!-- Le name[] permet un tableau au POST -->
@@ -48,7 +45,7 @@
 
     /* grille des cartes (Pico a déjà .grid, on fixe le min) */
     .cards {
-        grid-template-columns: repeat(auto-fill, minmax(var(11rem), 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
     }
 
     /* carte cliquable + état sélectionné */
