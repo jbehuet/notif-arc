@@ -34,27 +34,26 @@ export const load = async ({ url }) => {
             to: [v.email],
             subject: "NotifArc — Mandats",
             html: `
-         <header>
-            <a href="https://www.notif-arc.fr" style="display:flex;align-items:center;font-size: 2rem;color: #3a9092;text-decoration:none;">
-                <img src="https://www.notif-arc.fr/notif-arc-logo-512.png" width="68" alt="logo">
-                <strong>NotifArc</strong>
-            </a> 
-            <p style="margin:0 0 2rem 0;font-size:1rem;color:#646b79;font-style:italic;">Ne manquez plus aucune compétition.</p>
-        </header>
-        <div>
-            <h2>Événements tir à 18 m</h2>
-        </div>
-        <h4>Déjà connus :</h4>
-        <ul>
-             ${content.tir18m.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("")}
-        </ul>
-        <p><small style="color:#666">mis à jour le ${content.savedAt}</small></p>
-        <hr/>
-        <p style="font-size:small;color:#666;">
-        Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
-        <a href="${process.env.APP_BASE_URL}/unsubscribe">Se désinscrire</a>
-        </p>
-        `
+             <header>
+                <a href="https://www.notif-arc.fr" style="display:flex;align-items:center;font-size: 2rem;color: #3a9092;text-decoration:none;">
+                    <img src="https://www.notif-arc.fr/notif-arc-logo-512.png" width="68" alt="logo">
+                    <strong>NotifArc</strong>
+                </a> 
+                <p style="margin:0 0 2rem 0;font-size:1rem;color:#646b79;font-style:italic;">Ne manquez plus aucune compétition.</p>
+            </header>
+            <div>
+                <h2>Événements tir à 18 m</h2>
+            </div>
+            <h4>Déjà connus :</h4>
+            <ul>
+                 ${content.tir18m.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("")}
+            </ul>
+            <p><small style="color:#666">mis à jour le ${content.savedAt}</small></p>
+            <hr/>
+            <p style="font-size:small;color:#666;">
+            Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
+            <a href="${process.env.APP_BASE_URL}/unsubscribe">Se désinscrire</a>
+            </p>`
         })
     });
 
