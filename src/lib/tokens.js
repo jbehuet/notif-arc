@@ -14,3 +14,5 @@ export function verifyToken(token, secret) {
     } catch {}
     return null;
 }
+
+export const newManageToken = () => crypto.randomBytes(32).toString("base64url");

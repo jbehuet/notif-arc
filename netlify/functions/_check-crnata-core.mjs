@@ -114,8 +114,8 @@ export async function runCheck({ dryRun = false }) {
     console.log("Catégories avec nouveautés :", changedCategories);
     log.traces.push(`${ts} - Catégories avec nouveautés : ${changedCategories}`);
 
-    const subscibers = (await getJson(SUBS_KEY )) || [];
-    const usersToNotify = subscibers.filter(u =>
+    const subscribers = (await getJson(SUBS_KEY )) || [];
+    const usersToNotify = subscribers.filter(u =>
         u.categories.some(c => changedCategories.includes(c)) && u.status === "confirmed"
     );
 
@@ -143,14 +143,24 @@ export async function runCheck({ dryRun = false }) {
             log.traces.push(`${ts} - Mandats connus [${cat}] : ${knowEvents[cat].length}`);
         }
 
-        // Construit l'email
-        const html = buildEmail(seg.cats, newEvents, knowEvents, ts);
-
-        const toList = seg.users.map(s => s.email);
-        if (!toList.length) {
+        if (!seg.users.length) {
             log.traces.push(`${ts} - Aucun destinataire pour le segment [${sig}]`);
             continue; // passer au segment suivant
         }
+
+        // Construit l'email
+        const html = buildEmail(seg.cats, newEvents, knowEvents, ts);
+
+        const batch =  seg.users.map((user) => ({
+            from: process.env.RESEND_FROM,
+            to: user.email,
+            subject: "NotifArc — Nouveaux mandats",
+            html : renderEmailForUser(html, user),
+            headers: {
+                'List-Unsubscribe': `<https://www.notif-arc.fr/unsubscribe?t=${user.token}>`,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+            },
+        }));
 
         if (dryRun) {
             log.traces.push(`${ts} - [Dry Run] Email pour [${sig}] : ${toList}`);
@@ -159,17 +169,15 @@ export async function runCheck({ dryRun = false }) {
             console.log(html);
         } else {
             // --- envoi via Resend ---
-            const resp = await fetch("https://api.resend.com/emails", {
+            const resp = await fetch("https://api.resend.com/emails/batch", {
                 method: "POST",
-                headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    from: process.env.RESEND_FROM,
-                    to: "jbehuet@gmail.com",
-                    bcc: toList,
-                    subject: "NotifArc — Nouveaux mandats",
-                    html: html
-                })
+                headers: {
+                    Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(batch)
             });
+
             const text = await resp.text();
             console.log("Resend:", resp.status, text);
             log.traces.push(`${ts} - Resend: ${resp.status} : ${text}`);
@@ -229,15 +237,18 @@ function buildEmail(categories, newEvents, knowEvents, ts) {
         }
     }
 
-    htmlBody += `
-      <p><small style="font-size:.8rem;color:#646b79;font-style:italic;">mis à jour le ${ts}</small></p>
-      <hr/>
+    htmlBody += `<p><small style="font-size:.8rem;color:#646b79;font-style:italic;">mis à jour le ${ts}</small></p><hr/>`
+    return htmlBody;
+}
+
+function renderEmailForUser(html, user){
+    const htmlBody = html + `
       <p style="font-size:1rem;color:#646b79;">
         Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
-        <a href="${process.env.APP_BASE_URL}/unsubscribe">Se désinscrire</a>
+        <a href="https://www.notif-arc.fr/unsubscribe?t=${user.token}">Se désinscrire</a>
       </p>
     `
-    return htmlBody;
+    return htmlBody
 }
 
 // Store

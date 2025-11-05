@@ -1,4 +1,4 @@
-import { verifyToken } from "$lib/tokens";
+import { verifyToken, newManageToken } from "$lib/tokens";
 import { getJson, setJson } from "$lib/store";
 import {RESEND_API_KEY, RESEND_FROM, SECRET_KEY, USE_LOCAL_STORE, DRY_RUN} from '$env/static/private';
 
@@ -17,7 +17,7 @@ export const load = async ({ url }) => {
     if (idx === -1) return { status:"error", title:"Adresse introuvable", message:"Cette adresse n'existe pas." };
 
     if (list[idx].status !== "confirmed") {
-        list[idx] = { ...list[idx], status:"confirmed", confirmedAt: Date.now() };
+        list[idx] = { ...list[idx], status:"confirmed", token: newManageToken(), confirmedAt: Date.now() };
         await setJson(SUBS_KEY, list,useLocalStore);
     }
 
@@ -33,6 +33,10 @@ export const load = async ({ url }) => {
             from: RESEND_FROM,
             to: [v.email],
             subject: "NotifArc — Mandats",
+            headers: {
+                'List-Unsubscribe': `<https://www.notif-arc.fr/unsubscribe?t=${list[idx].token}>`,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+            },
             html: `
              <header>
                 <a href="https://www.notif-arc.fr" style="display:flex;align-items:center;font-size: 2rem;color: #3a9092;text-decoration:none;">
@@ -52,7 +56,7 @@ export const load = async ({ url }) => {
             <hr/>
             <p style="font-size:small;color:#666;">
             Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
-            <a href="${process.env.APP_BASE_URL}/unsubscribe">Se désinscrire</a>
+            <a href="https://www.notif-arc.fr/unsubscribe?t=${list[idx].token}">Se désinscrire</a>
             </p>`
         })
     });
