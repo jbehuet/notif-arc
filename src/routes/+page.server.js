@@ -7,8 +7,7 @@ const useLocalStore = USE_LOCAL_STORE === "1";
 export const load = async () => {
     let content = (await getJson(EVENTS_KEY, useLocalStore)) ?? { savedAt: null, tir18m: [] };
     return {
-        events: content.tir18m,
+        events: content,
         savedAt: content.savedAt,
-        meta: { total: content.tir18m.length }
     };
 };

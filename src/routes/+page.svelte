@@ -1,5 +1,6 @@
 <script>
     import CategorySelector from "$lib/components/categorySelector.svelte";
+    import { CATEGORIES } from '$lib/shared/categories.js';
     let categorieSelected = ["tir18m"];
 
     export let data;
@@ -54,23 +55,20 @@
 
         <p><small><em>Votre email est utilisé uniquement pour l’envoi des alertes. Un lien de désinscription est présent dans chaque message.</em></small></p>
         <footer>
-            <details class="no-margin">
-                <summary>Les mandats disponibles</summary>
-                <div>
-                    <p>
-                        <strong>Total:</strong> {data.meta.total} —
-                        <small>Mise à jour le {data.savedAt}</small>
-                    </p>
-                </div>
-                {#if message}
-                    <span>{message}</span>
+            <p><strong>Mandats disponibles</strong></p>
+            {#each CATEGORIES as category}
+                {#if !category.disabled}
+                    <details>
+                        <summary>{category.emoji} {category.label} ({data.events[category.slug].length})</summary>
+                        <ul class="list">
+                            {#each data.events[category.slug] as event}
+                                <li><a href="{event.href}" target="_blank">{event.title}</a> {event.date.replace("- Toute la journée", "")}</li>
+                            {/each}
+                        </ul>
+                    </details>
                 {/if}
-                <ul class="list">
-                    {#each data.events as event}
-                        <li><a href="{event.href}" target="_blank">{event.title}</a> {event.date.replace("- Toute la journée", "")}</li>
-                    {/each}
-                </ul>
-            </details>
+            {/each}
+            <small>Mise à jour le {data.savedAt}</small>
         </footer>
     </article>
 </main>

@@ -24,4 +24,10 @@
       padding: 0;
     }
   }
+
+  .items-space-between{
+    flex-direction: column;
+    align-items: initial;
+    gap: 1rem;
+  }
 }

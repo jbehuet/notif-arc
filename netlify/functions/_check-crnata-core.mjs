@@ -3,6 +3,7 @@ import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 import { getStore } from "@netlify/blobs";
 import { CATEGORIES, CRNATA_URLS } from '../../src/lib/shared/categories.js';
+import { emailFooter } from "../../src/lib/shared/email.js";
 
 const SUBS_KEY = "subscribers.json";
 const EVENTS_KEY = "nouvelle_aquitaine_events.json";
@@ -155,7 +156,7 @@ export async function runCheck({ dryRun = false }) {
             from: process.env.RESEND_FROM,
             to: user.email,
             subject: "NotifArc — Nouveaux mandats",
-            html : renderEmailForUser(html, user),
+            html : html + emailFooter(user.token),
             headers: {
                 'List-Unsubscribe': `<https://www.notif-arc.fr/unsubscribe?t=${user.token}>`,
                 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
@@ -163,8 +164,8 @@ export async function runCheck({ dryRun = false }) {
         }));
 
         if (dryRun) {
-            log.traces.push(`${ts} - [Dry Run] Email pour [${sig}] : ${toList}`);
-            console.log(`🧪 [Dry Run] Email pour [${sig}] :`, toList);
+            log.traces.push(`${ts} - [Dry Run] Email pour [${sig}] : ${seg.users}`);
+            console.log(`🧪 [Dry Run] Email pour [${sig}] :`, seg.users);
             log.traces.push(`${ts} - ${html}`);
             console.log(html);
         } else {
@@ -239,16 +240,6 @@ function buildEmail(categories, newEvents, knowEvents, ts) {
 
     htmlBody += `<p><small style="font-size:.8rem;color:#646b79;font-style:italic;">mis à jour le ${ts}</small></p><hr/>`
     return htmlBody;
-}
-
-function renderEmailForUser(html, user){
-    const htmlBody = html + `
-      <p style="font-size:1rem;color:#646b79;">
-        Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
-        <a href="https://www.notif-arc.fr/unsubscribe?t=${user.token}">Se désinscrire</a>
-      </p>
-    `
-    return htmlBody
 }
 
 // Store

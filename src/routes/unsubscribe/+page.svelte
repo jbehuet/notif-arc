@@ -2,10 +2,15 @@
     export let data;
 </script>
 
-<article>
-    <h1>Se désinscrire</h1>
-    <p class={data.status}>
-        {data.message}
-    </p>
-    <a href="/" role="button">Retour à l’accueil</a>
-</article>
+<main class="container">
+    <article>
+        <header>
+            <strong>Se désinscrire</strong>
+            <span>🚫</span>
+        </header>
+        <p class={data.status}>
+            {data.message}
+        </p>
+        <a href="/" role="button" class="outline">Retour à l’accueil</a>
+    </article>
+</main>

@@ -1,5 +1,6 @@
 import { verifyToken, newManageToken } from "$lib/tokens";
 import { getJson, setJson } from "$lib/store";
+import { emailFooter } from "$lib/shared/email";
 import {RESEND_API_KEY, RESEND_FROM, SECRET_KEY, USE_LOCAL_STORE, DRY_RUN} from '$env/static/private';
 
 const EVENTS_KEY = 'nouvelle_aquitaine_events.json';
@@ -54,10 +55,8 @@ export const load = async ({ url }) => {
             </ul>
             <p><small style="color:#666">mis à jour le ${content.savedAt}</small></p>
             <hr/>
-            <p style="font-size:small;color:#666;">
-            Vous recevez cet email car vous êtes inscrit à <a href="https://www.notif-arc.fr">NotifArc</a>.<br/>
-            <a href="https://www.notif-arc.fr/unsubscribe?t=${list[idx].token}">Se désinscrire</a>
-            </p>`
+            ${emailFooter(list[idx].token)}
+            `
         })
     });
 

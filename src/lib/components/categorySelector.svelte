@@ -2,7 +2,7 @@
     import { CATEGORIES } from '$lib/shared/categories.js';
 
     /** tableau des slugs sélectionnés (bindable) */
-    export let value = ["tir18m"];
+    export let value = [];
 
     /** nom du champ pour le POST (tableau) */
     export let name = "categories[]";

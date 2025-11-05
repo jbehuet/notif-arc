@@ -2,6 +2,17 @@
 @use "helper";
 @use "responsive";
 
+:root {
+  --font-family: 'Outfit', sans-serif;
+  --pico-primary-hover: #2f7375 !important;
+  --pico-primary: #3a9092 !important;
+  --pico-secondary: #56c69d !important;
+  --pico-primary-background: #3a9092 !important;
+  --pico-primary-hover-background: #2f7375 !important;
+  --pico-secondary-background: #56c69d !important;
+  --pico-accordion-active-summary-color:#3a9092 !important;
+}
+
 .success{
   color: #56c69d;
 }
