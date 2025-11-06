@@ -1,7 +1,7 @@
 <script>
     import CategorySelector from "$lib/components/categorySelector.svelte";
     import { CATEGORIES } from '$lib/shared/categories.js';
-    let categorieSelected = ["tir18m"];
+    let categorieSelected = [...CATEGORIES.map(c => c.slug)];
 
     export let data;
     let email = "", message = "", ok = false, honey = "";

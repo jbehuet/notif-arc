@@ -1,5 +1,25 @@
 <script>
     export let data;
+
+    async function handleUnsubscribe(email) {
+        const res = await fetch('/api/subscribers', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, token: data.token, status: 'unsubscribed' }),
+        });
+        const result = await res.json();
+        if (result.status === 200) window.location.reload();
+    }
+
+    async function handleDelete(email) {
+        const res = await fetch('/api/subscribers', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, token: data.token })
+        });
+        const result = await res.json();
+        if (result.status === 200) window.location.reload();
+    }
 </script>
 
 <article>
@@ -14,7 +34,8 @@
         <p>
             <strong>Total:</strong> {data.meta.total} —
             <strong>Confirmés:</strong> {data.meta.confirmed} —
-            <strong>En attente:</strong> {data.meta.pending}
+            <strong>En attente:</strong> {data.meta.pending}  —
+            <strong>Désinscrits:</strong> {data.meta.unsubscribed}
         </p>
 
         <table>
@@ -24,6 +45,7 @@
                 <th>Catégories</th>
                 <th>Statut</th>
                 <th>Inscription</th>
+                <th></th>
             </tr>
             </thead>
             <tbody>
@@ -33,6 +55,12 @@
                     <td>{s.categories.join(", ")}</td>
                     <td>{s.status}</td>
                     <td>{s.ts ? new Date(s.ts).toLocaleString('fr-FR') : "—"}</td>
+                    {#if s.status === "confirmed"}
+                        <td><button onclick={() => handleUnsubscribe(s.email)}>Désinscrire</button></td>
+                    {/if}
+                    {#if s.status === "unsubscribed"}
+                        <td><button onclick={() => handleDelete(s.email)}>Supprimer</button></td>
+                    {/if}
                 </tr>
             {/each}
             </tbody>

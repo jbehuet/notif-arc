@@ -1,33 +1,29 @@
-import { getJson } from '$lib/store.js';
-import { ADMIN_TOKEN, USE_LOCAL_STORE } from '$env/static/private';
-
-const SUBS_KEY = 'subscribers.json';
-const useLocalStore = USE_LOCAL_STORE === "1";
+import { ADMIN_TOKEN } from '$env/static/private';
+import { Bucket } from '$lib/utils/bucket.js';
+import {SubscribersStore} from "$lib/shared/subscribersStore.js";
+import {error} from "@sveltejs/kit";
 
 export const load = async ({ url }) => {
     const token = url.searchParams.get('token') || '';
     if (!ADMIN_TOKEN || token !== ADMIN_TOKEN) {
-        return {
-            status: 401,
-            error: 'Unauthorized',
-            subscribers: [],
-            meta: { total: 0, confirmed: 0, pending: 0 }
-        };
+        throw error(401, 'Unauthorized');
     }
 
-    const list = (await getJson(SUBS_KEY, useLocalStore)) ?? [];
-    const confirmed = list.filter((s) => s.status === 'confirmed').length;
-    const pending = list.filter((s) => s.status !== 'confirmed').length;
+    const subscribersStore = new SubscribersStore(Bucket())
+    const list = await subscribersStore.list()
 
-    // Tri simple par statut puis par date
+    const confirmed = list.filter((s) => s.status === 'confirmed').length;
+    const pending = list.filter((s) => s.status === 'pending').length;
+    const unsubscribed = list.filter((s) => s.status === 'unsubscribed').length;
+
+    // Tri simple par date
     list.sort((a, b) => {
-        if (a.status === b.status) return (b.ts || 0) - (a.ts || 0);
-        return a.status === 'confirmed' ? -1 : 1;
+        return (b.ts || 0) - (a.ts || 0);
     });
 
     return {
         subscribers: list,
-        meta: { total: list.length, confirmed, pending },
+        meta: { total: list.length, confirmed, pending, unsubscribed },
         token
     };
 };

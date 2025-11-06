@@ -1,11 +1,10 @@
-import { verifyToken, newManageToken } from "$lib/tokens";
-import { getJson, setJson } from "$lib/store";
+import { verifyToken, newManageToken } from "$lib/utils/tokens.js";
+import {Bucket} from "$lib/utils/bucket.js";
 import { emailFooter } from "$lib/shared/email";
-import {RESEND_API_KEY, RESEND_FROM, SECRET_KEY, USE_LOCAL_STORE, DRY_RUN} from '$env/static/private';
-
-const EVENTS_KEY = 'nouvelle_aquitaine_events.json';
-const SUBS_KEY = "subscribers.json";
-const useLocalStore = USE_LOCAL_STORE === "1";
+import {RESEND_API_KEY, RESEND_FROM, SECRET_KEY} from '$env/static/private';
+import {SubscribersStore} from "$lib/shared/subscribersStore.js";
+import {EventsStore} from "$lib/shared/eventsStore.js";
+import {CATEGORIES} from "$lib/shared/categories.js";
 
 export const load = async ({ url }) => {
     const v = verifyToken(url.searchParams.get("token") || "", SECRET_KEY);
@@ -13,16 +12,18 @@ export const load = async ({ url }) => {
         return { status:"error", title:"Lien invalide", message:"Le lien est invalide ou expiré." };
     }
 
-    const list = (await getJson(SUBS_KEY, useLocalStore)) ?? [];
-    const idx = list.findIndex(r => r.email === v.email);
-    if (idx === -1) return { status:"error", title:"Adresse introuvable", message:"Cette adresse n'existe pas." };
+    const token = await newManageToken();
+    const subscribersStore = new SubscribersStore(Bucket())
+    const subscriber = await subscribersStore.get(v.email)
 
-    if (list[idx].status !== "confirmed") {
-        list[idx] = { ...list[idx], status:"confirmed", token: newManageToken(), confirmedAt: Date.now() };
-        await setJson(SUBS_KEY, list,useLocalStore);
+    if (!subscriber) return { status:"error", title:"Adresse introuvable", message:"Cette adresse n'existe pas." };
+
+    if (subscriber.status !== "confirmed") {
+        await subscribersStore.createOrUpdate( { ...subscriber, status:"confirmed", token: token, confirmedAt: Date.now() });
     }
 
-    let content = (await getJson(EVENTS_KEY, useLocalStore)) ?? { savedAt: null, tir18m: [] };
+    const eventsStore = new EventsStore(Bucket())
+    let content = await eventsStore.get();
     // envoi mail avec les evenements existants
     await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -35,7 +36,7 @@ export const load = async ({ url }) => {
             to: [v.email],
             subject: "NotifArc — Mandats",
             headers: {
-                'List-Unsubscribe': `<https://www.notif-arc.fr/unsubscribe?t=${list[idx].token}>`,
+                'List-Unsubscribe': `<https://www.notif-arc.fr/unsubscribe?t=${subscriber.token}>`,
                 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
             },
             html: `
@@ -46,16 +47,17 @@ export const load = async ({ url }) => {
                 </a> 
                 <p style="margin:0 0 2rem 0;font-size:1rem;color:#646b79;font-style:italic;">Ne manquez plus aucune compétition.</p>
             </header>
-            <div>
-                <h2>Événements tir à 18 m</h2>
-            </div>
-            <h4>Déjà connus :</h4>
-            <ul>
-                 ${content.tir18m.map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("")}
-            </ul>
+            ${subscriber.categories.filter(slug => content[slug].length > 0 ).map(slug => {
+                const category = CATEGORIES.find(c => c.slug == slug);
+                return `<hr />
+                        <div><h3>Mandat ${category.emoji + " " + category.label}</h3></div>
+                        <h4>Déjà connus :</h4>
+                        <ul>${content[slug].map( e => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("")}</ul>
+                     `;
+            }).join("")}
             <p><small style="color:#666">mis à jour le ${content.savedAt}</small></p>
             <hr/>
-            ${emailFooter(list[idx].token)}
+            ${emailFooter(token)}
             `
         })
     });

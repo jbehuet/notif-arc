@@ -1,13 +1,6 @@
 import { json } from '@sveltejs/kit';
-import { signToken } from '$lib/tokens';
-import { getJson, setJson } from '$lib/store';
-import {
-    SECRET_KEY,
-    APP_BASE_URL,
-    RESEND_API_KEY,
-    RESEND_FROM,
-    USE_LOCAL_STORE
-} from '$env/static/private';
+import {Bucket} from '$lib/utils/bucket.js';
+import {SubscribersStore} from "$lib/shared/subscribersStore.js";
 
 const SUBS_KEY = "subscribers.json";
 
@@ -19,15 +12,18 @@ export const POST = async ({ request, url }) => {
     }
     const token = String(body.token || "").trim();
 
-    const list = (await getJson(SUBS_KEY)) ?? [];
-    const idx = list.findIndex(r => r.email === clean && r.token === token );
-    if (idx == -1){
+    const subscribersStore = new SubscribersStore(Bucket())
+    const subscriber = await subscribersStore.get(clean);
+    if (!subscriber) {
         // n'existe pas
         return json({ message: "Cet email n'existe pas." });
     }
 
-    const rec = list[idx]
-    rec.categories = body.categories
-    await setJson(SUBS_KEY, [...list.filter(r => r.email !== clean), rec]);
+    if (subscriber.token != token){
+        return json({ message: "Ce token est invalide." });
+    }
+
+    subscriber.categories = body.categories;
+    await subscribersStore.createOrUpdate(subscriber);
     return json({ message: "Vos préférences ont bien été enregistrées." });
 };

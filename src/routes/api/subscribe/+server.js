@@ -1,16 +1,13 @@
 import { json } from '@sveltejs/kit';
-import { signToken } from '$lib/tokens';
-import { getJson, setJson } from '$lib/store';
+import { signToken } from '$lib/utils/tokens.js';
+import {Bucket } from '$lib/utils/bucket.js';
 import {
     SECRET_KEY,
     APP_BASE_URL,
     RESEND_API_KEY,
     RESEND_FROM,
-    USE_LOCAL_STORE
 } from '$env/static/private';
-
-const SUBS_KEY = "subscribers.json";
-const useLocalStore = USE_LOCAL_STORE === "1";
+import {SubscribersStore} from "$lib/shared/subscribersStore.js";
 
 export const POST = async ({ request, url }) => {
     const body = await request.json().catch(() => ({}));
@@ -19,15 +16,15 @@ export const POST = async ({ request, url }) => {
         return json({ message: "Email invalide." }, { status: 400 });
     }
 
-    const list = (await getJson(SUBS_KEY, useLocalStore)) ?? [];
-    const idx = list.findIndex(r => r.email === clean && r.status === "confirmed");
-    if (idx > -1){
+    const subscribersStore = new SubscribersStore(Bucket())
+    const subscriber = subscribersStore.get(clean)
+
+    if (subscriber && subscriber.status === 'confirmed') {
         // Déjà inscrit
         return json({ message: "Email déjà inscrit et confirmé." });
     }
 
-    const rec = { email: clean, status: "pending", categories: body.categories, ts: Date.now() };
-    await setJson(SUBS_KEY, [...list.filter(r => r.email !== clean), rec], useLocalStore);
+    await subscribersStore.createOrUpdate({ email: clean, status: "pending", categories: body.categories, ts: Date.now() })
 
     const token = signToken(clean, "confirm", SECRET_KEY);
     const link = `${APP_BASE_URL || url.origin}/confirm?token=${token}`;

@@ -1,5 +1,6 @@
 import { USE_LOCAL_STORE } from '$env/static/private';
-import { getJson, setJson } from '$lib/store.js';
+import {Bucket} from '$lib/utils/bucket.js';
+import {SubscribersStore} from "$lib/shared/subscribersStore.js";
 
 const SUBS_KEY = 'subscribers.json';
 
@@ -10,14 +11,14 @@ export const load = async ({ url }) => {
     if (!token) {
         return { status:"error", message:"Le lien est invalide." };
     }
-    const subscribers = (await getJson(SUBS_KEY, useLocalStore)) ?? [];
-    const idx = subscribers.findIndex((u) => u.token === token);
-    if (idx === -1) {
+
+    const subscribersStore = new SubscribersStore(Bucket())
+    const subscriber = await subscribersStore.getByToken(token)
+
+    if (!subscriber) {
         return { status:"error", message: "Lien invalide ou déjà désinscrit." };
     }
 
-    const email = subscribers[idx]?.email ?? '';
-    const next = subscribers.filter((_, i) => i !== idx);
-    await setJson(SUBS_KEY, next, useLocalStore);
-    return { status:"success", message: `${email} a bien été désinscrit.`, email };
+    await subscribersStore.createOrUpdate({...subscriber, status: "unsubscribed"});
+    return { status:"success", message: `${subscriber.email} a bien été désinscrit.`, email: subscriber.email };
 }

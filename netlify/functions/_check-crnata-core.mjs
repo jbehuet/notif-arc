@@ -4,9 +4,11 @@ import * as cheerio from "cheerio";
 import { getStore } from "@netlify/blobs";
 import { CATEGORIES, CRNATA_URLS } from '../../src/lib/shared/categories.js';
 import { emailFooter } from "../../src/lib/shared/email.js";
+import {SubscribersStore} from "../../src/lib/shared/subscribersStore.js";
+import {EventsStore} from "../../src/lib/shared/eventsStore.js";
+import {LogsStore} from "../../src/lib/shared/logsStore.js";
 
-const SUBS_KEY = "subscribers.json";
-const EVENTS_KEY = "nouvelle_aquitaine_events.json";
+const BUCKET_NAME = "notif-arc";
 
 function nowFR() {
     return new Date().toLocaleString("fr-FR", { timeZone: process.env.LOCAL_TZ || "Europe/Paris" });
@@ -19,7 +21,6 @@ async function scrapePaginated(startUrl) {
     while (url) {
         const res = await fetch("https://www.crnata.fr" + url, { headers: { 'User-Agent': 'NotifArc Netlify Cron' } });
         if (!res.ok) {
-            await setJson(`logs/${Date.now()}_ERROR.json`, {status: res.status, url: url})
             throw new Error(`Fetch ${res.status} @ ${url}`);
         }
 
@@ -49,6 +50,7 @@ export async function runCheck({ dryRun = false }) {
     console.log("run crnata function - dryRun : ", dryRun);
 
     const LOG_KEY = `logs/${Date.now()}.json`;
+    const STORE = getStore({ name: BUCKET_NAME, siteID: process.env.NETLIFY_SITE_ID, token: process.env.NETLIFY_AUTH_TOKEN });
 
     const ts = nowFR();
     const categories = Object.keys(CRNATA_URLS);
@@ -59,15 +61,17 @@ export async function runCheck({ dryRun = false }) {
     const log = {traces : []}
     log.traces.push(`${ts} - start runCheck`);
 
-    const storeEvents = (await getJson(EVENTS_KEY)) || {};
+    const logsStore = new LogsStore(STORE, LOG_KEY);
+    const eventsStore = new EventsStore(STORE);
+    const events = await eventsStore.get();
 
     // Vérifie si l’exécution précédente est trop récente
-    if (storeEvents.savedAtEpoch && !dryRun) {
-        const diffMin = (Date.now() - storeEvents.savedAtEpoch) / 60000;
+    if (events.savedAtEpoch && !dryRun) {
+        const diffMin = (Date.now() - events.savedAtEpoch) / 60000;
         if (diffMin < 350) {
             console.log(`Dernier run ${diffMin.toFixed(1)} min → skip`);
             log.traces.push(`${ts} - Dernier run ${diffMin.toFixed(1)} min → skip`);
-            await setJson(LOG_KEY, log);
+            await logsStore.write(log)
             return { statusCode: 200, body: `skip: ${diffMin.toFixed(1)} min ago` };
         }
     }
@@ -93,7 +97,7 @@ export async function runCheck({ dryRun = false }) {
 
     // Met à jour le store
     if (!dryRun) {
-        await setJson(EVENTS_KEY, { savedAt: ts, savedAtEpoch: new Date().getTime(), ...allEventsByCategory});
+        await eventsStore.write(ts, allEventsByCategory);
     }
 
     let changedCategories = Object.entries(newEventsByCategories)
@@ -108,14 +112,15 @@ export async function runCheck({ dryRun = false }) {
 
     if (changedCategories.length === 0) {
         log.traces.push(`${ts} - Aucun nouvel événement — pas de notification.`);
-        await setJson(LOG_KEY, log)
+        await logsStore.write(log)
         return { statusCode: 200,  body:"Aucun nouvel événement — pas de notification." };
     }
 
     console.log("Catégories avec nouveautés :", changedCategories);
     log.traces.push(`${ts} - Catégories avec nouveautés : ${changedCategories}`);
 
-    const subscribers = (await getJson(SUBS_KEY )) || [];
+    const subscribersStore = new SubscribersStore(STORE)
+    const subscribers = await subscribersStore.list();
     const usersToNotify = subscribers.filter(u =>
         u.categories.some(c => changedCategories.includes(c)) && u.status === "confirmed"
     );
@@ -189,7 +194,7 @@ export async function runCheck({ dryRun = false }) {
     }
 
     if (!dryRun) {
-        await setJson(LOG_KEY, log)
+        await logsStore.write(log)
     }
     return { statusCode: 200, body: "success"};
 }
@@ -240,26 +245,4 @@ function buildEmail(categories, newEvents, knowEvents, ts) {
 
     htmlBody += `<p><small style="font-size:.8rem;color:#646b79;font-style:italic;">mis à jour le ${ts}</small></p><hr/>`
     return htmlBody;
-}
-
-// Store
-const BUCKET = "notif-arc";
-async function getJson(key) {
-   const store = getStore(
-        {
-            name: BUCKET,
-            siteID: process.env.NETLIFY_SITE_ID,
-            token: process.env.NETLIFY_AUTH_TOKEN
-        });
-    return await store.get(key, { type: "json" });
-}
-
-async function setJson(key, data) {
-    const store = getStore(
-        {
-            name: BUCKET,
-            siteID: process.env.NETLIFY_SITE_ID,
-            token: process.env.NETLIFY_AUTH_TOKEN
-        });
-    await store.set(key, JSON.stringify(data, null, 2));
 }
