@@ -79,7 +79,7 @@ export async function runCheck({ dryRun = false }) {
     const results = await Promise.all(
         categories.map(async (category) => {
             const lastEvents = await scrapePaginated(CRNATA_URLS[category]);
-            const prevEvents = storeEvents[category] || [];
+            const prevEvents = events[category] || [];
 
             const prevUrls = new Set(prevEvents.map((e) => e.href));
             const newEvents = lastEvents.filter((e) => !prevUrls.has(e.href));
@@ -143,10 +143,8 @@ export async function runCheck({ dryRun = false }) {
         for (const cat of seg.cats) {
             newEvents[cat] = newEventsByCategories[cat] || [];
             knowEvents[cat] = knowEventsByCategories[cat] || [];
-            console.log(`Nouveaux mandats [${cat}] : ${newEvents[cat].length}`);
-            console.log(`Mandats connus [${cat}] : ${knowEvents[cat].length}`);
-            log.traces.push(`${ts} - Nouveaux mandats [${cat}] : ${newEvents[cat].length}`);
-            log.traces.push(`${ts} - Mandats connus [${cat}] : ${knowEvents[cat].length}`);
+            console.log(`Mandats [${cat}] : ${newEvents[cat].length} nouveaux et ${knowEvents[cat].length} connus`);
+            log.traces.push(`${ts} - Mandats [${cat}] : ${newEvents[cat].length} nouveaux et ${knowEvents[cat].length} connus`);
         }
 
         if (!seg.users.length) {
@@ -169,10 +167,8 @@ export async function runCheck({ dryRun = false }) {
         }));
 
         if (dryRun) {
-            log.traces.push(`${ts} - [Dry Run] Email pour [${sig}] : ${seg.users}`);
-            console.log(`🧪 [Dry Run] Email pour [${sig}] :`, seg.users);
-            log.traces.push(`${ts} - ${html}`);
-            console.log(html);
+            log.traces.push(`${ts} - [Dry Run] Email pour [${sig}] : ${"("+ seg.users.length + ") " + seg.users.map(u => u.email).join(', ')}`);
+            console.log(`🧪 [Dry Run] Email pour [${sig}] : ${"("+ seg.users.length + ") " + seg.users.map(u => u.email).join(', ')}`);
         } else {
             // --- envoi via Resend ---
             const resp = await fetch("https://api.resend.com/emails/batch", {
