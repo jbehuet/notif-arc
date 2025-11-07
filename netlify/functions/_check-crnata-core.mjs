@@ -97,7 +97,7 @@ export async function runCheck({ dryRun = false }) {
 
     // Met à jour le store
     if (!dryRun) {
-        await eventsStore.write(ts, allEventsByCategory);
+        await eventsStore.update(ts, allEventsByCategory);
     }
 
     let changedCategories = Object.entries(newEventsByCategories)
