@@ -46,3 +46,9 @@ header{
 .list{
   padding-left: 1rem;
 }
+
+.redirect{
+  small {
+    color: var(--pico-muted-color);
+  }
+}

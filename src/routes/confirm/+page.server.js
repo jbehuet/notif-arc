@@ -55,7 +55,7 @@ export const load = async ({ url }) => {
                     return `<hr />
                         <div><h3>Mandat ${category.emoji + " " + category.label}</h3></div>
                         <h4>Déjà connus :</h4>
-                        <ul>${content[slug].map( e => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("")}</ul>
+                        <ul>${content[slug].map( e => `<li><a href="https://www.notif-arc.fr/r?to=${e.href}">${e.title}</a> ${e.date}</li>`).join("")}</ul>
                      `;
                 }).join("")}
             <p><small style="color:#666">mis à jour le ${content.savedAt}</small></p>

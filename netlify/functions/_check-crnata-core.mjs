@@ -219,8 +219,8 @@ function buildEmail(categories, newEvents, knowEvents, ts) {
             continue
         }
         const category = CATEGORIES.find(c => c.slug == categoryName);
-        const newHtml = newEvents[categoryName].map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
-        const knowHtml = knowEvents[categoryName].map((e) => `<li><a href="${e.href}">${e.title}</a> ${e.date}</li>`).join("");
+        const newHtml = newEvents[categoryName].map((e) => `<li><a href="https://www.notif-arc.fr/r?to=${e.href}">${e.title}</a> ${e.date}</li>`).join("");
+        const knowHtml = knowEvents[categoryName].map((e) => `<li><a href="https://www.notif-arc.fr/r?to=${e.href}">${e.title}</a> ${e.date}</li>`).join("");
 
         htmlBody += `<hr /><div><h3>Mandat ${category.emoji + " " + category.label}</h3></div>`;
 
