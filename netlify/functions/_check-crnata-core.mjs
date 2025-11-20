@@ -3,7 +3,7 @@ import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 import { getStore } from "@netlify/blobs";
 import { CATEGORIES, CRNATA_URLS } from '../../src/lib/shared/categories.js';
-import { emailFooter } from "../../src/lib/shared/email.js";
+import {emailFooter, emailHeader} from "../../src/lib/shared/email.js";
 import {SubscribersStore} from "../../src/lib/shared/subscribersStore.js";
 import {EventsStore} from "../../src/lib/shared/eventsStore.js";
 import {LogsStore} from "../../src/lib/shared/logsStore.js";
@@ -196,18 +196,8 @@ export async function runCheck({ dryRun = false }) {
 }
 
 function buildEmail(categories, newEvents, knowEvents, ts) {
-    const header = `
-     <header>
-        <a href="https://www.notif-arc.fr" style="display:flex;align-items:center;font-size: 2rem;color: #3a9092;text-decoration:none;">
-            <img src="https://www.notif-arc.fr/notif-arc-logo-512.png" width="68" alt="logo">
-            <strong>NotifArc</strong>
-        </a> 
-        <p style="margin:0 0 2rem 0;font-size:1rem;color:#646b79;font-style:italic;">Ne manquez plus aucune compétition.</p>
-    </header>
-  `;
-
     let htmlBody = `
-      ${header}
+      ${emailHeader()}
       <hr />
       <div>
         <h2>Nouveaux Mandats</h2>

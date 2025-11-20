@@ -8,6 +8,7 @@ import {
     RESEND_FROM,
 } from '$env/static/private';
 import {SubscribersStore} from "$lib/shared/subscribersStore.js";
+import {emailHeader} from "$lib/shared/email.js";
 
 export const POST = async ({ request, url }) => {
     const body = await request.json().catch(() => ({}));
@@ -40,13 +41,7 @@ export const POST = async ({ request, url }) => {
             to: [clean],
             subject: "Confirmez votre souscription — NotifArc",
             html: `
-            <header>
-                <a href="https://www.notif-arc.fr" style="display:flex;align-items:center;font-size: 2rem;color: #3a9092;text-decoration:none;">
-                    <img src="https://www.notif-arc.fr/notif-arc-logo-512.png" width="68" alt="logo">
-                    <strong>NotifArc</strong>
-                </a> 
-                <p style="margin:0 0 2rem 0;font-size:1rem;color:#646b79;font-style:italic;">Ne manquez plus aucune compétition.</p>
-            </header>
+            ${emailHeader()}
             <p>Bonjour,</p>
             <p>Pour finaliser votre souscription à <a href="https://www.notif-arc.fr">NotifArc</a> merci de confirmer votre email :</p>
             <p><a href="${link}">Confirmer mon email</a></p>`

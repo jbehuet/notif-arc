@@ -1,6 +1,16 @@
 <script>
     export let data;
 
+    async function handleRelance(email) {
+        const res = await fetch('/api/subscribers', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, token: data.token, status: 'pending' })
+        });
+        const result = await res.json();
+        if (result.status === 200) window.location.reload();
+    }
+
     async function handleUnsubscribe(email) {
         const res = await fetch('/api/subscribers', {
             method: 'PUT',
@@ -55,6 +65,9 @@
                     <td>{s.categories.join(", ")}</td>
                     <td>{s.status}</td>
                     <td>{s.ts ? new Date(s.ts).toLocaleString('fr-FR') : "—"}</td>
+                    {#if s.status === "pending"}
+                        <td><button onclick={() => handleRelance(s.email)}>Relancer</button></td>
+                    {/if}
                     {#if s.status === "confirmed"}
                         <td><button onclick={() => handleUnsubscribe(s.email)}>Désinscrire</button></td>
                     {/if}
