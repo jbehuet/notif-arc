@@ -2,8 +2,6 @@ import { json } from '@sveltejs/kit';
 import {Bucket} from '$lib/utils/bucket.js';
 import {SubscribersStore} from "$lib/shared/subscribersStore.js";
 
-const SUBS_KEY = "subscribers.json";
-
 export const POST = async ({ request, url }) => {
     const body = await request.json().catch(() => ({}));
     const clean = String(body.email || "").trim().toLowerCase();

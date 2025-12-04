@@ -2,10 +2,6 @@ import { USE_LOCAL_STORE } from '$env/static/private';
 import {Bucket} from '$lib/utils/bucket.js';
 import {SubscribersStore} from "$lib/shared/subscribersStore.js";
 
-const SUBS_KEY = 'subscribers.json';
-
-const useLocalStore = USE_LOCAL_STORE === "1";
-
 export const load = async ({ url }) => {
     const token = url.searchParams.get("t") || "";
     if (!token) {
