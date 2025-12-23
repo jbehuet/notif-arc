@@ -16,7 +16,7 @@
 
 <article>
     <header>
-        <h1>Admin — Souscriptions</h1>
+        <h1>Admin — Events</h1>
         {#if data.status === 401}
             <p class="contrast">Accès refusé (token invalide ou manquant).</p>
         {/if}
