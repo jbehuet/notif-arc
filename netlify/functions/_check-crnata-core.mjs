@@ -27,7 +27,7 @@ async function scrapePaginated(startUrl) {
         const html = await res.text();
         const $ = cheerio.load(html);
 
-        $('#em-category-8 > ul').find('li').each((_, li) => {
+        $('.em-taxonomy-events> ul').find('li').each((_, li) => {
             const a = $(li).find('a[href]').first();
             if (!a.length) return;
             const href = String(a.attr('href') || '').trim();

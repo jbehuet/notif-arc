@@ -12,6 +12,12 @@ export class EventsStore {
         return this.write({ savedAt: ts, savedAtEpoch: new Date().getTime(), ...events})
     }
 
+    async delete(category, url){
+        const events = await this.read();
+        events[category] = [...events[category].filter(r => r.href !== url)]
+        return this.write({ ...events})
+    }
+
     // --- internes ---
     async read() {
         return await this.store.get(this.key, { type: 'json' });
